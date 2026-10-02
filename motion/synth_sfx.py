@@ -44,15 +44,18 @@ def riser(gain=1, d=1.6):
     out = (n * .7 + tone) * gain
     return np.concatenate([out, np.zeros(int(.05 * SR))])
 def tick_one(f=3200): d = .03; t = t_(d); return np.sin(2 * np.pi * f * t) * env_ad(len(t), .0003, .004)
-def ticks(gain=1, d=.9, rate=22):
-    out = np.zeros(int(d * SR))
-    for k in range(int(d * rate)):
-        i = int(k / rate * SR); s = tick_one(2600 + 400 * (k % 3)) * (1 - k / (d * rate)) ** .5
-        out[i:i + len(s)] += s[:len(out) - i]
-    return out * .5 * gain
+def ticks(gain=1, d=1.0):
+    # 'count-up' swell: airy filtered noise rising in brightness + a soft tonal shimmer (A/E fifth), no clicks
+    t = t_(d); e = (t / d) ** 1.6 * np.exp(-np.maximum(0, t - d * .85) / .06)
+    air = hp_fast(sweep_noise(d, 700, 5200), 400) * .35
+    tone = sum(np.sin(2 * np.pi * f * t * (1 + .03 * t / d)) for f in (440, 659.25, 880)) * .06
+    return (air + tone) * e * .55 * gain
 def pop(gain=1):
-    d = .18; t = t_(d); f = 900 * np.exp(-t * 18) + 300
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * env_ad(len(t), .001, .05) * .55 * gain
+    # soft UI tap: low felt thump + muted transient (no pitch sweep)
+    d = .25; t = t_(d)
+    thump = np.sin(2 * np.pi * 150 * t) * env_ad(len(t), .002, .045)
+    tick = lp_fast(hp_fast(noise(d), 1200), 4500) * env_ad(len(t), .0004, .006) * .35
+    return (thump * .6 + tick) * .5 * gain
 def glitch(gain=1):
     d = .38; n = noise(d); steps = np.resize(np.repeat(rng.standard_normal(int(d * 60) + 1), int(SR / 60)), len(n))
     crushed = np.round(n * 3) / 3 * .4 + np.sign(steps) * .25

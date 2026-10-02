@@ -73,6 +73,14 @@ function conceal(el, t, t0, dur = .3) {
   const p = P(t, t0, t0 + dur, E.inExpo); el.ws.forEach(w => { if (p > 0) w.style.transform = `translateY(${-p * 105}%)`; });
 }
 const fmt = n => Math.round(n).toLocaleString('en-US');
+const srcAt = t => { const c = TL.clips.find(c => t >= c.dst && t < c.dst + (c.src[1] - c.src[0])); return c ? c.src[0] + (t - c.dst) : 0; };
+const FACES = { ron: [428, 696, 630, 354], wad: [697, 827, 540, 276], tom: [1026, 1314, 612, 348] };
+const faceSrc = (id, s) => { const [a, b, w, h] = FACES[id]; return { url: `assets/faces/${id}/${String(clamp(Math.floor(s * SRC_FPS) + 1, a, b)).padStart(5, '0')}.jpg`, crop: [0, 0, w, h], nat: [w, h] }; };
+const CLIPN = { A: 207, B: 151 };
+const clipUrl = (k, t) => `assets/clip${k}/${String(clamp(Math.floor(t * 30) + 1, 1, CLIPN[k])).padStart(4, '0')}.jpg`;
+const LOGO = { intel: 'assets/logo_intel.jpg', gofo: 'assets/logo_gofo.jpg', gp: 'assets/logo_gp.jpg', rel: 'assets/logo_reliance.svg',
+  cscmp: 'assets/cscmp.png', scbw: 'assets/scb_white.png', edgew: 'assets/edge_white.png', edge: 'assets/edge.png', scb: 'assets/scb.png' };
+const PRELOAD = Object.values(LOGO).map(u => { const i = new Image(); i.src = u; return i.decode().catch(() => {}); });
 const frameUrl = s => 'assets/frames/' + String(clamp(Math.floor(s * SRC_FPS) + 1, 1, NFRAMES)).padStart(5, '0') + '.jpg';
 
 // a footage plate: shows a crop of a source frame inside a box, with camera push
@@ -83,13 +91,13 @@ function plate(parent, z = 0) {
     el: d,
     set(o) {
       const { src, crop = [0, 68, 1672, 944], x = 960, y = 540, w = 1600, h = 900, zoom = 1, px = 0, py = 0,
-        op = 1, rx = 0, ry = 0, rz = 0, s = 1, blur = 0, br = 1, sat = 1, radius = 18, tx = 0, ty = 0 } = o;
-      const url = frameUrl(src);
+        op = 1, rx = 0, ry = 0, rz = 0, s = 1, blur = 0, br = 1, sat = 1, radius = 18, tx = 0, ty = 0, nat = [1920, 1080] } = o;
+      const url = o.url || frameUrl(src);
       if (url !== cur) { cur = url; img.src = url; pending.push(img.decode().catch(() => {})); }
       const cw = crop[2] / zoom, ch = crop[3] / zoom;
       const cx = crop[0] + crop[2] / 2 + px * crop[2] / 2 * (1 - 1 / zoom), cy = crop[1] + crop[3] / 2 + py * crop[3] / 2 * (1 - 1 / zoom);
       const k = Math.max(w / cw, h / ch);
-      S(img, { width: 1920 * k + 'px', height: 1080 * k + 'px', left: (w / 2 - cx * k) + 'px', top: (h / 2 - cy * k) + 'px' });
+      S(img, { width: nat[0] * k + 'px', height: nat[1] * k + 'px', left: (w / 2 - cx * k) + 'px', top: (h / 2 - cy * k) + 'px' });
       S(d, {
         left: x - w / 2 + 'px', top: y - h / 2 + 'px', width: w + 'px', height: h + 'px', opacity: op, borderRadius: radius + 'px',
         transform: `translate(${tx}px,${ty}px) perspective(1800px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${s})`,
@@ -106,6 +114,32 @@ function svg(parent, w, h, css = {}) {
 function sv(parent, tag, attrs) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; }
 function strokeDraw(el, p) { const L = el.getTotalLength ? el.getTotalLength() : 1000; el.style.strokeDasharray = L; el.style.strokeDashoffset = L * (1 - p); }
 
+// white logo tile (logos are on white, multiplied so their white backgrounds vanish)
+function logoTile(parent, f, w, h, css = {}) {
+  const d = div(parent, 'abs', Object.assign({ width: w + 'px', height: h + 'px', background: '#fff', borderRadius: '14px', overflow: 'hidden',
+    boxShadow: '0 30px 70px rgba(0,0,0,.45)' }, css));
+  const [px, py] = f.logoPad || [.17, .2];
+  div(d, 'abs', { left: w * px + 'px', right: w * px + 'px', top: h * py + 'px', bottom: h * (f.with ? py + .16 : py) + 'px',
+    background: `url(${LOGO[f.logo]}) center/contain no-repeat`, mixBlendMode: 'multiply' });
+  if (f.with) div(d, 'abs U', { left: '0', right: '0', bottom: h * .1 + 'px', textAlign: 'center', fontWeight: 700, fontSize: Math.round(h * .12) + 'px', color: '#0b2a5c' }, f.with);
+  return d;
+}
+// speaker panel: webcam footage + broadcast lower third
+function speaker(r, name, org, get) {
+  const pl = plate(r);
+  const l3 = div(r, 'abs', { whiteSpace: 'nowrap', display: 'flex', alignItems: 'stretch', zIndex: 2 });
+  const nm = div(l3, '', { background: '#f5f7fb', color: '#0b1d3d', padding: '12px 22px 9px', fontFamily: "'Barlow Condensed'", fontWeight: 800,
+    fontSize: '40px', textTransform: 'uppercase', lineHeight: '1' }, name);
+  const og = div(l3, '', { background: 'var(--red)', color: '#fff', padding: '0 18px', display: 'flex', alignItems: 'center', fontFamily: 'Inter',
+    fontWeight: 600, fontSize: '20px', letterSpacing: '.18em', textTransform: 'uppercase' }, org);
+  return (t, lt, o) => {
+    const g = get(t, lt); const e = P(lt, 0, .6);
+    pl.set(Object.assign({ x: o.x, y: o.y, w: o.w, h: o.h, zoom: 1.02 + lt * .015, op: e, tx: (1 - e) * (o.from || -140), ry: o.ry || 0, radius: 16 }, g));
+    const k = P(lt, .35, .8, E.outCubic);
+    S(l3, { left: (o.x - o.w / 2 + 34) + 'px', top: (o.y + o.h / 2 - 34) + 'px', opacity: k, clipPath: `inset(0 ${(1 - k) * 100}% 0 0)` });
+  };
+}
+
 // ---------- shots ----------
 const SHOTS = [];
 function shot(a, b, build, opts = {}) {
@@ -118,11 +152,11 @@ function shot(a, b, build, opts = {}) {
 // FINALISTS
 // ======================================================================
 const FIN = [
-  { n: '01', name: 'Intel', sub: 'AI-Driven Market Intelligence for Proactive Supply Chain Defense', p: { src: 12.2, crop: [0, 68, 1672, 944] }, th: { src: 12.2, crop: [930, 170, 620, 620] } },
-  { n: '02', name: 'GOFO', sub: 'Building a National Parcel Network from Zero with Atlas', p: { src: 36.5, crop: [0, 60, 1680, 900] }, th: { src: 28.5, crop: [80, 380, 820, 480] } },
-  { n: '03', name: 'Intel', sub: 'From Reactive to Predictive: An Intelligent Control Tower for Chemical & Gas Supply', p: { src: 52.5, crop: [0, 60, 1680, 900] }, th: { src: 57.5, crop: [1100, 230, 600, 330] } },
-  { n: '04', name: 'Georgia-Pacific', with: '× project44', sub: 'From 5 Minutes to Under 2: Transforming Yard Operations with project44 YMS', p: { src: 66.5, crop: [0, 60, 1680, 900] }, th: { src: 66.5, crop: [560, 580, 420, 220] } },
-  { n: '05', name: 'Reliance Industries', sub: 'From Reactive to Resilient: An Emergency Response Network', p: { src: 83.5, crop: [0, 60, 1680, 900] }, th: { src: 89, crop: [92, 255, 460, 320] } },
+  { n: '01', name: 'Intel', logo: 'intel', tag: 'Market Intelligence', logoPad: [.22, .2], sub: 'AI-Driven Market Intelligence for Proactive Supply Chain Defense', p: { src: 12.2, crop: [0, 68, 1672, 944] }, th: { src: 12.2, crop: [930, 170, 620, 620] } },
+  { n: '02', name: 'GOFO', logo: 'gofo', tag: 'National Parcel Network', logoPad: [.12, .3], sub: 'Building a National Parcel Network from Zero with Atlas', p: { src: 36.5, crop: [0, 60, 1680, 900] }, th: { src: 28.5, crop: [80, 380, 820, 480] } },
+  { n: '03', name: 'Intel', logo: 'intel', tag: 'Chem & Gas Control Tower', logoPad: [.22, .2], sub: 'From Reactive to Predictive: An Intelligent Control Tower for Chemical & Gas Supply', p: { src: 52.5, crop: [0, 60, 1680, 900] }, th: { src: 57.5, crop: [1100, 230, 600, 330] } },
+  { n: '04', name: 'Georgia-Pacific', with: '× project44', logo: 'gp', tag: 'Yard Operations', logoPad: [.26, .05], sub: 'From 5 Minutes to Under 2: Transforming Yard Operations with project44 YMS', p: { src: 66.5, crop: [0, 60, 1680, 900] }, th: { src: 66.5, crop: [560, 580, 420, 220] } },
+  { n: '05', name: 'Reliance Industries', logo: 'rel', tag: 'Emergency Response Network', logoPad: [.2, .05], sub: 'From Reactive to Resilient: An Emergency Response Network', p: { src: 83.5, crop: [0, 60, 1680, 900] }, th: { src: 89, crop: [92, 255, 460, 320] } },
 ];
 const CARD_T = [17.5, 35.5, 54.5, 72.5, 92.5];
 
@@ -161,6 +195,8 @@ shot(0, C[2].a, (r) => {
 shot(C[2].a, 10.5, (r) => {
   const tW = W(2, 'weapon'), tS = W(2, 'state'), tC = W(3, 'corporate');
   const pl = plate(r);
+  const shade = div(r, 'abs', { inset: '0', background: 'linear-gradient(90deg, rgba(5,13,29,.92) 0%, rgba(5,13,29,.55) 55%, rgba(5,13,29,.25) 100%)' });
+  const redg = div(r, 'abs', { inset: '0', background: '#8a0f1f', mixBlendMode: 'color', opacity: 0 });
   const a1 = words(r, 'Supply chains', 'D', { left: '150px', top: '190px', fontSize: '190px' });
   const a2 = words(r, 'are being used', 'D out', { left: '150px', top: '360px', fontSize: '190px' });
   const a3 = words(r, 'as a', 'D', { left: '150px', top: '530px', fontSize: '190px' });
@@ -171,7 +207,9 @@ shot(C[2].a, 10.5, (r) => {
   sfx(tW - .05, 'glitch', 1); sfx(tW, 'hit', 1); hit(tW, 1.2);
   sfx(tS, 'pop', .6); sfx(tC, 'pop', .6);
   return (t) => {
-    pl.set({ src: 2.0, crop: [0, 68, 1672, 944], x: 1420, y: 520, w: 900, h: 508, zoom: lerp(1, 1.15, (t - C[2].a) / 6), ry: -24, op: .35, br: .5, sat: 0, blur: 2 });
+    const lc = t - C[2].a;
+    pl.set({ url: clipUrl('B', lc * .92), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.04 + lc * .012, op: P(lc, 0, .5), br: .8, radius: 0 });
+    S(redg, { opacity: P(t, tW, tW + .25) * .75 });
     reveal(a1, t, C[2].a, .07); reveal(a2, t, W(2, 'literally'), .07); reveal(a3, t, W(2, 'as'), .07);
     wp.style.left = (150 + a3.offsetWidth + 46) + 'px';
     const g = P(t, tW, tW + .35, E.lin); const on = t >= tW - .02;
@@ -184,46 +222,48 @@ shot(C[2].a, 10.5, (r) => {
 
 // ---------------- TITLE ----------------
 shot(10.5, 17.5, (r) => {
-  const big = div(r, 'D abs out', { left: '0', width: '1920px', textAlign: 'center', top: '160px', fontSize: '640px', WebkitTextStroke: '2px rgba(143,182,255,.16)' }, '2026');
-  const pre = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '268px' }, 'CSCMP &nbsp;&amp;&nbsp; SupplyChainBrain present');
+  const pl = plate(r);
+  const shade = div(r, 'abs', { inset: '0', background: 'radial-gradient(ellipse at 50% 38%, rgba(5,13,29,.72) 0%, rgba(5,13,29,.35) 55%, rgba(5,13,29,.6) 100%)' });
+  const pre = div(r, 'abs', { left: '0', width: '1920px', top: '130px', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '40px' });
+  div(pre, '', { width: '124px', height: '124px', borderRadius: '50%', background: `#fff url(${LOGO.cscmp}) center/112px no-repeat`, boxShadow: '0 0 0 3px rgba(255,255,255,.15)' });
+  div(pre, '', { width: '2px', height: '84px', background: 'rgba(245,247,251,.35)' });
+  div(pre, '', { width: '360px', height: '62px', background: `url(${LOGO.scbw}) center/contain no-repeat` });
+  const pres = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '268px', color: 'var(--white)' }, 'present');
   const t1 = words(r, 'Supply Chain', 'D', { left: '0', width: '1920px', textAlign: 'center', top: '330px', fontSize: '200px' });
   const t2 = words(r, 'Innovation Award', 'D', { left: '0', width: '1920px', textAlign: 'center', top: '500px', fontSize: '200px' });
   t2.lastChild.querySelector('.wi').innerHTML += '<sup style="font-size:.25em;vertical-align:top;line-height:1.2">™</sup>';
   const bar = div(r, 'abs', { left: '810px', width: '300px', height: '8px', top: '700px', background: 'var(--red)', transformOrigin: '50% 50%' });
   const fin = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '740px', fontSize: '64px', letterSpacing: '.18em', color: 'var(--sky)' }, 'The 2026 Finalists');
-  const group = [pre, t1, t2, bar, fin];
-  // finalist cards
+  const group = [pre, pres, t1, t2, bar];
+  const TW = 300, TH = 170, GAP = 40, X0 = 960 - (5 * TW + 4 * GAP) / 2;
   const cards = FIN.map((f, i) => {
-    const c = div(r, 'abs', { left: (110 + i * 348) + 'px', top: '420px', width: '320px', height: '470px' });
-    const pl = plate(c); const g = div(c, 'abs', { inset: '0', borderRadius: '18px', background: 'linear-gradient(to top, rgba(5,13,29,.95) 15%, rgba(5,13,29,.1) 70%)' });
-    const n = div(c, 'D abs red', { left: '24px', top: '24px', fontSize: '56px' }, f.n);
-    const nm = div(c, 'D abs', { left: '24px', bottom: '28px', fontSize: f.name.length > 12 ? '50px' : '64px', whiteSpace: 'normal', width: '280px' }, f.name + (f.with ? `<br><span style="font-size:.6em;color:var(--sky)">${f.with}</span>` : ''));
-    return { c, pl, f };
+    const c = div(r, 'abs', { left: (X0 + i * (TW + GAP)) + 'px', top: '520px', width: TW + 'px', height: '260px' });
+    logoTile(c, f, TW, TH);
+    const tg = div(c, 'abs U', { left: '0', width: TW + 'px', top: (TH + 20) + 'px', textAlign: 'center', fontWeight: 600, fontSize: '22px', lineHeight: 1.25, color: 'var(--white)' },
+      `<span style="color:var(--red);font-family:'Barlow Condensed';font-weight:800;font-size:26px;margin-right:8px">${f.n}</span>${f.tag}`);
+    return { c, f };
   });
   sfx(10.0, 'riser', .8); sfx(10.5, 'boom', 1); hit(10.5, 1.4); FLASHES.push(10.5);
   sfx(13.45, 'whoosh', .7); FIN.forEach((f, i) => sfx(13.55 + i * .11, 'pop', .45));
   sfx(17.1, 'whoosh', .8);
   return (t) => {
     const lt = t - 10.5;
-    S(big, { opacity: P(lt, 0, .8) * .9, transform: `scale(${lerp(1.25, 1, P(lt, 0, 3, E.outCubic)) + lt * .01})` });
-    S(pre, { opacity: P(lt, .2, .7), letterSpacing: lerp(.6, .32, P(lt, .2, 1.4)) + 'em' });
+    pl.set({ url: clipUrl('A', lt), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.02 + lt * .01, op: 1, br: .95, radius: 0 });
+    S(pre, { opacity: P(lt, .1, .6), transform: `translateY(${(1 - P(lt, .1, .8)) * 20}px)` });
+    S(pres, { opacity: P(lt, .3, .8), letterSpacing: lerp(.6, .32, P(lt, .3, 1.4)) + 'em' });
     reveal(t1, lt, .15, .08, .6); reveal(t2, lt, .35, .08, .6);
     S(bar, { transform: `scaleX(${P(lt, .7, 1.3, E.inOutExpo)})` });
-    S(fin, { opacity: P(lt, 1.6, 2.1), transform: `translateY(${(1 - P(lt, 1.6, 2.2)) * 20}px)` });
-    // lockup moves up for the cards
     const up = P(lt, 2.9, 3.5, E.inOutExpo);
-    const tgt = [[268, 60, .8], [330, 95, .6], [500, 200, .6], [700, 320, .6], [740, 740, 1]];
+    S(fin, { opacity: P(lt, 1.6, 2.1) * (1 - P(lt, 2.7, 3.0)), transform: `translateY(${(1 - P(lt, 1.6, 2.2)) * 20}px)` });
+    const tgt = [[130, 34, .62], [268, 112, .8], [330, 150, .72], [500, 275, .72], [700, 418, .7]];
     group.forEach((g, i) => S(g, { transform: `translateY(${-up * (tgt[i][0] - tgt[i][1])}px) scale(${lerp(1, tgt[i][2], up)})`, transformOrigin: '50% 0%' }));
-    S(fin, { opacity: P(lt, 1.6, 2.1) * (1 - up) });
-    S(big, { top: (160 - up * 200) + 'px' });
     const push = P(lt, 6.3, 7.0, E.inExpo);
-    cards.forEach(({ c, pl, f }, i) => {
+    cards.forEach(({ c }, i) => {
       const p = P(lt, 3.05 + i * .11, 3.75 + i * .11, E.outCubic);
-      const fl = Math.sin((lt + i) * 1.3) * 6;
-      S(c, { opacity: clamp(p * 1.5) * (i === 0 ? 1 : 1 - push), transform: `translateY(${(1 - p) * 160 + fl}px) rotate(${(1 - p) * (i - 2) * 3}deg)` });
-      pl.set({ src: f.th.src, crop: f.th.crop, x: 160, y: 235, w: 320, h: 470, zoom: 1 + lt * .02, op: 1, br: .9 });
+      const fl = Math.sin((lt + i) * 1.3) * 4;
+      S(c, { opacity: clamp(p * 1.5) * (i === 0 ? 1 : 1 - push), transformOrigin: '150px 85px',
+        transform: `translateY(${(1 - p) * 140 + fl}px) rotate(${(1 - p) * (i - 2) * 3}deg) scale(${i === 0 ? 1 + push * 3 : 1})` });
     });
-    cards[0].c.style.transform += ` scale(${1 + push * 2.5})`; cards[0].c.style.transformOrigin = '50% 50%';
   };
 });
 
@@ -236,15 +276,18 @@ FIN.forEach((f, i) => {
   shot(a, a + 2.0, (r) => {
     const pl = plate(r);
     const idx = div(r, 'D abs out', { left: '90px', top: '170px', fontSize: '560px', WebkitTextStroke: '3px rgba(245,247,251,.25)' }, f.n);
-    const lab = div(r, 'lbl abs', { left: '760px', top: '330px' }, `Finalist ${f.n} / 05`);
-    const bar = div(r, 'abs', { left: '760px', top: '372px', width: '120px', height: '8px', background: 'var(--red)', transformOrigin: '0 50%' });
-    const nm = words(r, f.name, 'D', { left: '752px', top: '410px', fontSize: f.name.length > 12 ? '150px' : '190px' });
-    const wi = f.with ? div(r, 'D abs', { left: '760px', top: f.name.length > 12 ? '545px' : '580px', fontSize: '70px', color: 'var(--sky)', textTransform: 'none' }, f.with) : null;
-    const sub = div(r, 'U abs', { left: '760px', top: f.with ? '650px' : '600px', width: '1000px', fontSize: '36px', fontWeight: 500, lineHeight: 1.3, color: 'rgba(245,247,251,.85)' }, f.sub);
+    const tile = logoTile(r, f, 340, 192, { left: '760px', top: '170px' });
+    const lab = div(r, 'lbl abs', { left: '760px', top: '410px' }, `Finalist ${f.n} / 05`);
+    const bar = div(r, 'abs', { left: '760px', top: '452px', width: '120px', height: '8px', background: 'var(--red)', transformOrigin: '0 50%' });
+    const nm = words(r, f.name, 'D', { left: '752px', top: '485px', fontSize: '150px' });
+    const wi = f.with ? div(r, 'D abs', { left: '760px', top: '622px', fontSize: '64px', color: 'var(--sky)', textTransform: 'none' }, f.with) : null;
+    const sub = div(r, 'U abs', { left: '760px', top: f.with ? '700px' : '640px', width: '1000px', fontSize: '34px', fontWeight: 500, lineHeight: 1.3, color: 'rgba(245,247,251,.85)' }, f.sub);
     return (t) => {
       const lt = t - a;
       pl.set({ src: f.p.src, crop: f.p.crop, x: 960, y: 540, w: 1920, h: 1080, zoom: 1.1 + lt * .06, op: 1, blur: 14, br: .32, sat: .6, radius: 0 });
       S(idx, { transform: `translateX(${(1 - P(lt, .05, .7)) * -220 + lt * 14}px)`, opacity: P(lt, .05, .4) });
+      const tp = P(lt, .08, .55, E.outCubic);
+      S(tile, { opacity: tp, transform: `translateY(${(1 - tp) * 40}px) scale(${lerp(.92, 1, tp)})`, transformOrigin: '0 50%' });
       S(lab, { opacity: P(lt, .2, .5) }); S(bar, { transform: `scaleX(${P(lt, .2, .7, E.inOutExpo)})` });
       reveal(nm, lt, .22, .07, .6);
       if (wi) S(wi, { opacity: P(lt, .5, .8), transform: `translateY(${(1 - P(lt, .5, .9)) * 20}px)` });
@@ -326,7 +369,23 @@ shot(C[7].a, 35.5, (r, a) => {
 // ======================================================================
 // 02 GOFO
 // ======================================================================
-shot(37.5, C[10].a, (r, a) => {
+shot(37.5, C[9].a, (r, a) => {
+  const sp = speaker(r, 'Ron Jansen', 'GOFO', t => faceSrc('ron', srcAt(t)));
+  const lab = div(r, 'lbl abs', { left: '1160px', top: '300px' }, 'GOFO · Finalist 02');
+  const q = words(r, '“Imagine you’re sitting there…”', 'U', { left: '1160px', top: '345px', fontSize: '40px', fontWeight: 500, color: 'rgba(245,247,251,.85)', fontStyle: 'italic' });
+  const n = div(r, 'D abs', { left: '1150px', top: '420px', fontSize: '230px' }, '500K');
+  const nl = div(r, 'lbl abs', { left: '1160px', top: '640px', color: 'var(--white)', fontSize: '26px' }, 'Parcels a day · 2024');
+  const tA = W(8, '500,000');
+  sfx(tA, 'hit', .6);
+  return (t) => {
+    const lt = t - a;
+    sp(t, lt, { x: 560, y: 450, w: 900, h: 506 });
+    S(lab, { opacity: P(lt, .2, .5) }); reveal(q, lt, .3, .05);
+    S(n, { opacity: P(t, tA - .1, tA + .1), transform: `scale(${lerp(1.2, 1, P(t, tA - .1, tA + .4))})`, transformOrigin: '0 50%' });
+    S(nl, { opacity: P(t, tA + .2, tA + .5) });
+  };
+});
+shot(C[9].a, C[10].a, (r, a) => {
   const pl = plate(r);
   const s = svg(r, 760, 560, { left: '1080px', top: '170px' });
   for (let i = 0; i < 4; i++) sv(s, 'line', { x1: 0, x2: 740, y1: 500 - i * 150, y2: 500 - i * 150, stroke: 'rgba(143,182,255,.18)', 'stroke-width': 2 });
@@ -338,8 +397,8 @@ shot(37.5, C[10].a, (r, a) => {
   const n1l = div(r, 'lbl abs', { left: '1256px', top: '650px', color: 'var(--white)' }, 'Parcels / day · now');
   const n2 = div(r, 'D abs red', { left: '1560px', top: '200px', fontSize: '130px' }, '3M?');
   const n2l = div(r, 'lbl abs', { left: '1564px', top: '320px' }, 'Next peak');
-  const tA = W(8, '500,000'), tB = W(9, '3');
-  sfx(tA, 'pop', .6); sfx(tB - .3, 'riser_short', .6); sfx(tB + .2, 'hit', .7); hit(tB + .2, .5);
+  const tA = a + .1, tB = W(9, '3');
+  sfx(tB - .3, 'riser_short', .6); sfx(tB + .2, 'hit', .7); hit(tB + .2, .5);
   return (t) => {
     const lt = t - a;
     pl.set({ src: 28.5, crop: [0, 70, 1680, 850], x: 560, y: 450, w: 920, h: 466, zoom: 1 + lt * .03, px: -.4, ry: 14, op: P(lt, 0, .5) });
@@ -424,17 +483,17 @@ shot(C[13].a, 54.5, (r, a) => {
 // 03 INTEL — CONTROL TOWER
 // ======================================================================
 shot(56.5, C[16].a, (r, a) => {
-  const pl = plate(r);
+  const sp = speaker(r, 'Andrew Wadolny', 'Intel', t => faceSrc('wad', srcAt(t)));
   const lab = div(r, 'lbl abs', { left: '1010px', top: '260px' }, 'Intel · Chemical & gas supply');
-  const h1 = words(r, 'The last line', 'D', { left: '1000px', top: '310px', fontSize: '170px' });
-  const h2 = words(r, 'of defense', 'D red', { left: '1000px', top: '470px', fontSize: '170px' });
+  const h1 = words(r, 'The last line', 'D', { left: '990px', top: '310px', fontSize: '150px' });
+  const h2 = words(r, 'of defense', 'D red', { left: '990px', top: '455px', fontSize: '150px' });
   const sub = div(r, 'U abs', { left: '1008px', top: '650px', fontSize: '36px', fontWeight: 500, color: 'rgba(245,247,251,.85)' }, "for Intel's manufacturing flow");
   const wall = div(r, 'abs', { left: '960px', top: '250px', width: '8px', height: '480px', background: 'var(--red)', transformOrigin: '50% 100%' });
   const tL = W(15, 'last'), tD = W(15, 'defense');
   sfx(tD, 'hit', .8); hit(tD, .7);
   return (t) => {
     const lt = t - a;
-    pl.set({ src: 46.5, crop: [0, 60, 1680, 880], x: 470, y: 470, w: 820, h: 430, zoom: 1 + lt * .02, ry: 16, op: P(lt, 0, .5), tx: (1 - P(lt, 0, .6)) * -150 });
+    sp(t, lt, { x: 490, y: 470, w: 820, h: 462, ry: 8 });
     S(lab, { opacity: P(lt, .1, .4) }); reveal(h1, t, tL - .2, .07); reveal(h2, t, tD - .15, .07);
     S(wall, { transform: `scaleY(${P(t, tD - .2, tD + .3, E.inOutExpo)})` });
     S(sub, { opacity: P(t, tD + .3, tD + .7) });
@@ -485,9 +544,9 @@ shot(W(17, 'worst'), 72.5, (r, a) => {
   for (let i = 0; i < N; i++) rows.push(div(r, 'abs', { left: '200px', top: (210 + i * 90) + 'px', height: '58px', width: (620 - i * 60) + 'px', background: 'rgba(143,182,255,.16)', borderRadius: '6px', transformOrigin: '0 50%' }));
   const mk = div(r, 'abs', { left: '200px', height: '58px', borderRadius: '6px', background: 'var(--red)', transformOrigin: '0 50%' });
   const wl = div(r, 'lbl abs', { left: '200px', top: '770px', color: 'var(--dim)' }, 'Worst in class');
-  const h1 = div(r, 'D abs', { left: '960px', top: '250px', fontSize: '120px', color: 'var(--dim)' }, 'Worst in class');
-  const ar = div(r, 'D abs red', { left: '960px', top: '370px', fontSize: '120px' }, '↓');
-  const h2 = words(r, 'Best in class', 'D', { left: '960px', top: '480px', fontSize: '210px' });
+  const h1 = div(r, 'D abs', { left: '930px', top: '270px', fontSize: '96px', color: 'var(--dim)' }, 'From worst in class');
+  const ar = div(r, 'abs', { left: '934px', top: '378px', width: '90px', height: '6px', background: 'var(--red)', transformOrigin: '0 50%' });
+  const h2 = words(r, 'Best in class', 'D', { left: '924px', top: '410px', fontSize: '200px' });
   const tB = W(18, 'best');
   sfx(a + .4, 'riser_short', .6); sfx(tB, 'hit', 1); hit(tB, 1);
   return (t) => {
@@ -498,7 +557,7 @@ shot(W(17, 'worst'), 72.5, (r, a) => {
     const idx = lerp(N - 1, 0, climb);
     S(mk, { top: (210 + idx * 90) + 'px', width: (620 - idx * 60) + 'px', opacity: P(lt, .2, .4) });
     S(h1, { opacity: P(lt, 0, .3) * lerp(1, .5, P(t, tB - .2, tB + .2)) });
-    S(ar, { opacity: P(t, a + .5, a + .8), transform: `translateY(${Math.sin(lt * 6) * 8}px)` });
+    S(ar, { transform: `scaleX(${P(t, tB - .3, tB + .1, E.inOutExpo)})` });
     reveal(h2, t, tB - .1, .07);
     S(wl, { opacity: P(lt, .3, .6) });
   };
@@ -514,10 +573,10 @@ shot(74.5, C[22].a, (r, a) => {
   const NB = 72, bars = [];
   for (let i = 0; i < NB; i++) bars.push(div(r, 'abs', { left: (960 - NB * 11 + i * 22) + 'px', top: '330px', width: '12px', height: '240px', borderRadius: '6px', background: 'var(--white)', transformOrigin: '50% 50%' }));
   const board = (y, label, val, t0, t1) => {
-    const row = div(r, 'abs', { left: '450px', top: y + 'px', height: '120px' });
+    const row = div(r, 'abs', { left: '330px', top: y + 'px', height: '120px' });
     div(row, 'lbl abs', { left: '0', top: '44px', color: 'var(--sky)', fontSize: '28px' }, label);
     const cells = [...val].map((ch, i) => {
-      const c = div(row, 'D abs', { left: (300 + i * 112) + 'px', top: '0', width: '100px', height: '120px', lineHeight: '120px', textAlign: 'center', fontSize: '104px', background: '#0d2147', borderRadius: '8px', boxShadow: 'inset 0 -60px 0 rgba(0,0,0,.18)' });
+      const c = div(row, 'D abs', { left: (450 + i * 112) + 'px', top: '0', width: '100px', height: '120px', lineHeight: '120px', textAlign: 'center', fontSize: '104px', background: '#0d2147', borderRadius: '8px', boxShadow: 'inset 0 -60px 0 rgba(0,0,0,.18)' });
       return { c, ch, ts: lerp(t0, t1, val.length > 1 ? i / (val.length - 1) : 0) };
     });
     return cells;
@@ -544,14 +603,16 @@ shot(74.5, C[22].a, (r, a) => {
   };
 });
 shot(C[22].a, C[23].a, (r, a) => {
-  const s = svg(r, 520, 520, { left: '700px', top: '130px' });
+  const sp = speaker(r, 'Tom Cahill', 'GP × project44', t => faceSrc('tom', srcAt(t)));
+  const s = svg(r, 520, 520, { left: '1190px', top: '150px' });
   sv(s, 'circle', { cx: 260, cy: 260, r: 230, fill: 'none', stroke: 'rgba(143,182,255,.16)', 'stroke-width': 18 });
   const ring = sv(s, 'circle', { cx: 260, cy: 260, r: 230, fill: 'none', stroke: '#f5f7fb', 'stroke-width': 18, transform: 'rotate(-90 260 260)' });
-  const clk = div(r, 'D abs', { left: '700px', width: '520px', textAlign: 'center', top: '300px', fontSize: '190px' });
-  const cl = div(r, 'lbl abs', { left: '700px', width: '520px', textAlign: 'center', top: '480px', color: 'var(--white)' }, 'Driver check-in');
+  const clk = div(r, 'D abs', { left: '1190px', width: '520px', textAlign: 'center', top: '320px', fontSize: '190px' });
+  const cl = div(r, 'lbl abs', { left: '1190px', width: '520px', textAlign: 'center', top: '500px', color: 'var(--white)' }, 'Driver check-in');
   const tF = W(22, 'five'), tT = W(22, 'two');
   sfx(tF, 'pop', .6); sfx(tF + .2, 'ticks', .6); sfx(tT + .3, 'hit', .9); hit(tT + .3, .8);
   return (t) => {
+    sp(t, t - a, { x: 580, y: 450, w: 880, h: 495 });
     const p = P(t, tF + .1, tT + .35, E.inOutCubic);
     const sec = lerp(300, 120, p);
     clk.textContent = `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
@@ -638,8 +699,7 @@ shot(94.5, C[27].a, (r, a) => {
   };
 });
 shot(C[27].a, C[29].a, (r, a) => {
-  const pl = plate(r);
-  const nm = div(r, 'lbl abs', { left: '180px', top: '790px', color: 'var(--white)', fontSize: '20px' }, 'Arush Kishore · VP, Reliance Industries Limited');
+  const sp = speaker(r, 'Arush Kishore', 'Reliance Industries', (t, lt) => ({ src: clamp(88.7 + lt * .9, 88.7, 92.3), crop: [92, 255, 460, 320] }));
   const h1 = words(r, 'Safety', 'D', { left: '960px', top: '220px', fontSize: '200px' });
   const h2 = div(r, 'D abs', { left: '960px', top: '400px', fontSize: '200px' }, 'is not a');
   const cost = div(r, 'D abs', { left: '960px', top: '580px', fontSize: '200px' }, 'cost');
@@ -649,8 +709,7 @@ shot(C[27].a, C[29].a, (r, a) => {
   sfx(W(27, 'cost'), 'hit', .7); sfx(tE, 'swipe', .8); sfx(W(28, 'efficiency'), 'hit', .8); hit(W(28, 'efficiency'), .6);
   return (t) => {
     const lt = t - a;
-    pl.set({ src: clamp(88.7 + lt * .9, 88.7, 92.3), crop: [92, 255, 460, 320], x: 500, y: 520, w: 640, h: 445, zoom: 1.0 + lt * .02, op: P(lt, 0, .4), tx: (1 - P(lt, 0, .5)) * -120, ry: 10 });
-    S(nm, { opacity: P(lt, .4, .8) });
+    sp(t, lt, { x: 470, y: 470, w: 700, h: 487, ry: 8 });
     reveal(h1, t, a, .07);
     S(h2, { opacity: P(t, W(27, 'is'), W(27, 'is') + .2) });
     const sw = P(t, tE, tE + .3, E.inOutExpo);
@@ -708,15 +767,25 @@ shot(C[30].a, 110, (r, a) => {
 // ======================================================================
 WIPES.push(110);
 shot(110, 113.6, (r, a) => {
-  const cards = FIN.map((f, i) => ({ pl: plate(r), f, i }));
-  const h1 = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '330px', fontSize: '250px', textShadow: '0 10px 60px rgba(0,0,0,.6)' });
+  const bgp = plate(r);
+  const shade = div(r, 'abs', { inset: '0', background: 'rgba(5,13,29,.55)' });
+  const TW = 300, TH = 170, GAP = 40, X0 = 960 - (5 * TW + 4 * GAP) / 2;
+  const tiles = FIN.map((f, i) => {
+    const c = div(r, 'abs', { left: (X0 + i * (TW + GAP)) + 'px', top: '190px', width: TW + 'px', height: '250px' });
+    logoTile(c, f, TW, TH);
+    div(c, 'abs U', { left: '0', width: TW + 'px', top: (TH + 18) + 'px', textAlign: 'center', fontWeight: 600, fontSize: '22px', lineHeight: 1.25, color: 'var(--white)' }, f.tag);
+    return c;
+  });
+  const h1 = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '520px', fontSize: '230px', textShadow: '0 10px 60px rgba(0,0,0,.6)' });
   sfx(110, 'hit', .9); FIN.forEach((f, i) => sfx(110.1 + i * .09, 'pop', .4));
   sfx(111.6, 'hit', .8); sfx(112.6, 'boom', 1); hit(112.6, 1.2);
   return (t) => {
     const lt = t - a;
-    cards.forEach(({ pl, f, i }) => {
-      const p = P(lt, .05 + i * .09, .6 + i * .09, E.outCubic);
-      pl.set({ src: f.th.src + (i === 4 ? lt * .4 : 0), crop: f.th.crop, x: 192 + i * 384, y: 540, w: 372, h: 1040, zoom: 1.1 - lt * .02, op: p, ty: (1 - p) * (i % 2 ? -200 : 200), br: lerp(.9, .35, P(lt, 1.2, 1.6)), radius: 10 });
+    bgp.set({ url: clipUrl('A', 3.2 + lt * .95), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.08 - lt * .01, op: 1, radius: 0 });
+    tiles.forEach((c, i) => {
+      const p = P(lt, .05 + i * .09, .65 + i * .09, E.outCubic);
+      const dim = i === 0 ? 0 : 0;
+      S(c, { opacity: p, transform: `translateY(${(1 - p) * (i % 2 ? -120 : 120)}px) scale(${lerp(1, .96, P(lt, 2.1, 2.6))})` });
     });
     const one = lt >= 2.1;
     h1.innerHTML = one ? '1 <span class="red">winner.</span>' : '5 finalists.';
@@ -724,6 +793,8 @@ shot(110, 113.6, (r, a) => {
   };
 });
 shot(113.6, 117.2, (r, a) => {
+  const bgp = plate(r);
+  const shade = div(r, 'abs', { inset: '0', background: 'radial-gradient(ellipse at 50% 50%, rgba(5,13,29,.78) 0%, rgba(5,13,29,.6) 60%, rgba(5,13,29,.8) 100%)' });
   const pre = words(r, 'See them live at', 'lbl', { left: '0', width: '1920px', textAlign: 'center', top: '180px', fontSize: '30px', color: 'var(--white)' });
   const logo = div(r, 'abs', { left: '660px', top: '240px', width: '600px', height: '208px', background: 'url(assets/edge_white.png) center/contain no-repeat' });
   const yr = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '470px', fontSize: '120px' }, 'Nashville <span class="red">·</span> Oct 4–7, 2026');
@@ -734,6 +805,7 @@ shot(113.6, 117.2, (r, a) => {
   sfx(a, 'whoosh', .7); sfx(a + .3, 'hit', .8); sfx(a + 1.2, 'pop', .5); sfx(a + 1.5, 'pop', .5);
   return (t) => {
     const lt = t - a;
+    bgp.set({ url: clipUrl('B', 1.3 + lt), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.12 + lt * .015, op: 1, radius: 0 });
     reveal(pre, lt, 0, .05);
     S(logo, { opacity: P(lt, .2, .5), transform: `scale(${lerp(1.3, 1, P(lt, .2, .8))})` });
     S(yr, { opacity: P(lt, .6, .9), transform: `translateY(${(1 - P(lt, .6, 1.1)) * 30}px)` });
@@ -828,13 +900,31 @@ function camera(t) {
   $('flash').style.opacity = fl !== undefined ? .55 * (1 - (t - fl) / .35) : 0;
 }
 
+// safety net: no display type may leave the frame (shrinks font once, layout-based so it's deterministic)
+function fitAll(root) {
+  root.querySelectorAll('.D').forEach(el => {
+    if (el._fit) return; el._fit = 1;
+    const fs = parseFloat(el.style.fontSize || getComputedStyle(el).fontSize);
+    if (el.style.width === '1920px') {
+      const rg = document.createRange(); rg.selectNodeContents(el);
+      const k = el.getBoundingClientRect().width / el.offsetWidth || 1;
+      const cw = rg.getBoundingClientRect().width / k;
+      if (cw > 1780) el.style.fontSize = fs * 1780 / cw + 'px';
+    } else if (el.offsetLeft + el.scrollWidth > 1840) {
+      el.style.fontSize = fs * (1840 - el.offsetLeft) / el.scrollWidth + 'px';
+    }
+  });
+}
+let preloaded = false;
 window.seek = async (t) => {
+  if (!preloaded) { await Promise.all(PRELOAD); preloaded = true; }
   pending = [];
   drawBg(t);
   for (const s of SHOTS) {
     const on = t >= s.a && t < s.b;
     s.root.style.display = on ? 'block' : 'none';
     if (on) {
+      if (!s.fitted) { fitAll(s.root); s.fitted = true; }
       s.up(t, s.a, s.b);
       if (s.punch) { const lt = t - s.a; S(s.root, { transform: `scale(${lerp(1.045, 1, P(lt, 0, .5))})`, opacity: P(lt, 0, .06, E.lin) }); }
     }

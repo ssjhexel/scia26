@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 -24 680 584">
+  <!-- Vector rebuild of the Reliance Industries Limited mark from the supplied reference -->
+  <circle cx="348" cy="120" r="130" fill="#BFA36D"/>
+  <!-- white R: stem + bowl + leg (negative space inside the disc) -->
+  <path fill="#fff" d="M282 238 L282 150 C282 112 306 88 344 88 C382 88 404 110 404 140 C404 166 388 182 366 188
+           L432 236 C426 241 419 246 411 250 L338 190 L326 190 L326 150 L346 150 C358 150 364 145 364 138
+           C364 130 357 124 346 124 C333 124 322 132 322 150 L322 252 C308 249 295 244 282 238 Z"/>
+  <!-- gold flame inside the stem -->
+  <path fill="#BFA36D" d="M302 238 C292 222 292 204 302 186 L304 180 L306 186 C316 204 316 222 306 238 Z"/>
+  <text x="400" y="400" text-anchor="middle" font-family="Liberation Serif, FreeSerif, serif" font-size="150" fill="#1d1a19" stroke="#1d1a19" stroke-width="3">Reliance</text>
+  <text x="400" y="520" text-anchor="middle" font-family="Liberation Serif, FreeSerif, serif" font-size="72" letter-spacing="2" fill="#1d1a19">Industries Limited</text>
+</svg>
