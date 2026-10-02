@@ -26,10 +26,11 @@ const CUES = TL.cues.map(([s, e, txt]) => {
   if (!c) return null;
   const off = c.dst - c.src[0];
   return { a: Math.max(c.dst, s + off), b: Math.min(e, c.src[1]) + off, txt };
-}).filter(Boolean);
+});
 const C = CUES;
 // word timing: distributed by character weight inside the cue
 CUES.forEach(c => {
+  if (!c) return;
   const ws = c.txt.split(/\s+/); const wts = ws.map(w => w.length + 2); const tot = wts.reduce((a, b) => a + b, 0);
   let acc = 0; c.words = ws.map((w, i) => { const s = c.a + (c.b - c.a) * acc / tot; acc += wts[i]; return { w, t: s }; });
 });
@@ -78,7 +79,7 @@ const FACES = { ron: [428, 696, 630, 354], wad: [697, 827, 540, 276], tom: [1026
 const faceSrc = (id, s) => { const [a, b, w, h] = FACES[id]; return { url: `assets/faces/${id}/${String(clamp(Math.floor(s * SRC_FPS) + 1, a, b)).padStart(5, '0')}.jpg`, crop: [0, 0, w, h], nat: [w, h] }; };
 const CLIPN = { A: 207, B: 151 };
 const clipUrl = (k, t) => `assets/clip${k}/${String(clamp(Math.floor(t * 30) + 1, 1, CLIPN[k])).padStart(4, '0')}.jpg`;
-const LOGO = { intel: 'assets/logo_intel.jpg', gofo: 'assets/logo_gofo.jpg', gp: 'assets/logo_gp.jpg', rel: 'assets/logo_reliance.svg',
+const LOGO = { intel: 'assets/logo_intel.jpg', gofo: 'assets/logo_gofo.jpg', gp: 'assets/logo_gp.jpg', rel: 'assets/logo_reliance.png',
   cscmp: 'assets/cscmp.png', scbw: 'assets/scb_white.png', edgew: 'assets/edge_white.png', edge: 'assets/edge.png', scb: 'assets/scb.png' };
 const PRELOAD = Object.values(LOGO).map(u => { const i = new Image(); i.src = u; return i.decode().catch(() => {}); });
 const frameUrl = s => 'assets/frames/' + String(clamp(Math.floor(s * SRC_FPS) + 1, 1, NFRAMES)).padStart(5, '0') + '.jpg';
@@ -127,7 +128,7 @@ function logoTile(parent, f, w, h, css = {}) {
 // speaker panel: webcam footage + broadcast lower third
 function speaker(r, name, org, get) {
   const pl = plate(r);
-  const l3 = div(r, 'abs', { whiteSpace: 'nowrap', display: 'flex', alignItems: 'stretch', zIndex: 2 });
+  const l3 = div(r, 'abs', { whiteSpace: 'nowrap', display: 'flex', alignItems: 'stretch', zIndex: 2, opacity: 0 });
   const nm = div(l3, '', { background: '#f5f7fb', color: '#0b1d3d', padding: '12px 22px 9px', fontFamily: "'Barlow Condensed'", fontWeight: 800,
     fontSize: '40px', textTransform: 'uppercase', lineHeight: '1' }, name);
   const og = div(l3, '', { background: 'var(--red)', color: '#fff', padding: '0 18px', display: 'flex', alignItems: 'center', fontFamily: 'Inter',
@@ -158,65 +159,61 @@ const FIN = [
   { n: '04', name: 'Georgia-Pacific', with: '× project44', logo: 'gp', tag: 'Yard Operations', logoPad: [.26, .05], sub: 'From 5 Minutes to Under 2: Transforming Yard Operations with project44 YMS', p: { src: 66.5, crop: [0, 60, 1680, 900] }, th: { src: 66.5, crop: [560, 580, 420, 220] } },
   { n: '05', name: 'Reliance Industries', logo: 'rel', tag: 'Emergency Response Network', logoPad: [.2, .05], sub: 'From Reactive to Resilient: An Emergency Response Network', p: { src: 83.5, crop: [0, 60, 1680, 900] }, th: { src: 89, crop: [92, 255, 460, 320] } },
 ];
-const CARD_T = [17.5, 35.5, 54.5, 72.5, 92.5];
+const CARD_T = [17.5, 39.0, 58.0, 76.0, 96.0];
 
-// ---------------- COLD OPEN A: 20 years / never seen ----------------
-shot(0, C[2].a, (r) => {
-  const line = div(r, 'abs', { left: '0px', top: '539px', width: '1920px', height: '3px', background: 'var(--red)', transformOrigin: '50% 50%' });
-  const pl = plate(r);
-  const num = div(r, 'D abs', { left: '150px', top: '250px', fontSize: '330px' });
-  const plus = div(r, 'D abs red', { top: '250px', fontSize: '330px' }, '+');
-  const yl = words(r, 'YEARS IN SUPPLY CHAIN', 'lbl', { left: '160px', top: '560px', fontSize: '30px', color: 'var(--white)' });
-  const l1 = words(r, "I've never seen", 'D', { left: '150px', top: '330px', fontSize: '170px' });
-  const l2 = words(r, 'conditions like this.', 'D', { left: '150px', top: '480px', fontSize: '170px' });
-  l2.ws.forEach((w, i) => { if (i > 0) w.classList.add('red'); });
-  const tag = div(r, 'lbl abs', { left: '154px', top: '700px' }, 'Intel · Supply Chain Leadership');
-  sfx(0, 'riser', .7); sfx(.55, 'hit', .8); hit(.55, .6);
-  const tY = W(0, 'twenty'); sfx(tY - .1, 'ticks', .5);
-  sfx(C[1].a - .05, 'whoosh', .7);
+// ---------------- HOOK: "Safety is not a cost" ----------------
+shot(0, 3.75, (r) => {
+  const line = div(r, 'abs', { left: '0px', top: '539px', width: '1920px', height: '3px', background: 'var(--white)', transformOrigin: '50% 50%' });
+  const sp = speaker(r, 'Arush Kishore', 'Reliance Industries', (t, lt) => ({ src: clamp(88.7 + lt * .9, 88.7, 92.3), crop: [92, 255, 460, 320] }));
+  const h1 = words(r, 'Safety', 'D', { left: '960px', top: '220px', fontSize: '200px' });
+  const h2 = div(r, 'D abs', { left: '960px', top: '400px', fontSize: '200px' }, 'is not a');
+  const cost = div(r, 'D abs', { left: '960px', top: '580px', fontSize: '200px' }, 'cost');
+  const strike = div(r, 'abs', { left: '950px', top: '660px', width: '360px', height: '14px', background: 'var(--red)', transformOrigin: '0 50%' });
+  const eff = words(r, 'it drives efficiency', 'D red', { left: '960px', top: '400px', fontSize: '170px', whiteSpace: 'normal', width: '900px', lineHeight: '.9' });
+  const tE = C[28].a, tC = W(27, 'cost');
+  sfx(0, 'riser', .5); sfx(.5, 'hit', .7); hit(.5, .5);
+  sfx(tC, 'hit', .7); sfx(tE, 'swipe', .8); sfx(W(28, 'efficiency'), 'hit', .8); hit(W(28, 'efficiency'), .6);
   return (t) => {
-    const lp = P(t, .05, .6, E.inOutExpo);
-    const out = P(t, .55, 1.0, E.inOutExpo);
+    const lp = P(t, .02, .45, E.inOutExpo), out = P(t, .45, .8, E.inOutExpo);
     S(line, { transform: `scaleX(${lp}) scaleY(${1 - out})`, opacity: 1 - out });
-    const op = P(t, .6, 1.4);
-    pl.set({ src: 1.0, crop: [40, 470, 1600, 220], x: 1300, y: 760 + (1 - op) * 30, w: 1100, h: 180 * 1300 / 1600 * 1.5, zoom: lerp(1.05, 1.25, t / 5), op: op * .55 * (1 - P(t, C[1].a, C[1].a + .4)) + .18 * P(t, C[1].a, C[1].a + .4), br: .6, sat: .3, ry: -18, blur: 1 });
-    const n = lerp(0, 20, P(t, tY - .45, tY + .35, E.outCubic));
-    const gone = P(t, C[1].a - .1, C[1].a + .25, E.inExpo);
-    num.textContent = Math.round(n);
-    S(num, { opacity: P(t, .55, .8) * (1 - gone), transform: `translateY(${-gone * 120}px)` });
-    S(plus, { left: (150 + (n >= 10 ? 330 : 165)) + 'px', opacity: P(t, tY + .2, tY + .5) * (1 - gone), transform: `translateY(${-gone * 120}px)` });
-    reveal(yl, t, .9, .05); yl.style.opacity = 1 - gone;
-    reveal(l1, t, C[1].a, .07); reveal(l2, t, W(1, 'conditions'), .08);
-    S(tag, { opacity: P(t, C[1].a + .5, C[1].a + 1) });
+    if (t > .4) sp(t, t - .4, { x: 470, y: 470, w: 700, h: 487, ry: 8 });
+    reveal(h1, t, C[27].a - .1, .07);
+    const fade = 1 - P(t, tE + .25, tE + .45);
+    S(h2, { opacity: P(t, W(27, 'is'), W(27, 'is') + .2) * fade });
+    S(cost, { opacity: P(t, tC, tC + .15) * fade });
+    S(strike, { transform: `scaleX(${P(t, tE, tE + .3, E.inOutExpo)})`, opacity: fade });
+    reveal(eff, t, tE + .3, .07);
   };
 });
 
-// ---------------- COLD OPEN B: weapon ----------------
-shot(C[2].a, 10.5, (r) => {
-  const tW = W(2, 'weapon'), tS = W(2, 'state'), tC = W(3, 'corporate');
-  const pl = plate(r);
-  const shade = div(r, 'abs', { inset: '0', background: 'linear-gradient(90deg, rgba(5,13,29,.92) 0%, rgba(5,13,29,.55) 55%, rgba(5,13,29,.25) 100%)' });
-  const redg = div(r, 'abs', { inset: '0', background: '#8a0f1f', mixBlendMode: 'color', opacity: 0 });
-  const a1 = words(r, 'Supply chains', 'D', { left: '150px', top: '190px', fontSize: '190px' });
-  const a2 = words(r, 'are being used', 'D out', { left: '150px', top: '360px', fontSize: '190px' });
-  const a3 = words(r, 'as a', 'D', { left: '150px', top: '530px', fontSize: '190px' });
-  const wp = div(r, 'D abs red', { left: '420px', top: '530px', fontSize: '190px' }, 'WEAPON');
-  const chips = ['State level', 'Corporate level'].map((s, i) => div(r, 'abs U', {
-    left: (150 + i * 330) + 'px', top: '760px', padding: '14px 26px', border: '2px solid rgba(255,255,255,.35)', borderRadius: '40px',
-    fontWeight: 600, fontSize: '30px', letterSpacing: '.04em', whiteSpace: 'nowrap' }, s));
-  sfx(tW - .05, 'glitch', 1); sfx(tW, 'hit', 1); hit(tW, 1.2);
-  sfx(tS, 'pop', .6); sfx(tC, 'pop', .6);
+// ---------------- PROOF MONTAGE: one headline number per finalist ----------------
+shot(3.75, 10.5, (r, a) => {
+  const bgp = plate(r);
+  const shade = div(r, 'abs', { inset: '0', background: 'radial-gradient(ellipse at 50% 45%, rgba(5,13,29,.72) 0%, rgba(5,13,29,.55) 55%, rgba(5,13,29,.85) 100%)' });
+  const STATS = [
+    { t: 3.9, f: FIN[1], to: 3000000, label: 'Parcels a day, built from zero' },
+    { t: 5.15, f: FIN[0], to: 5000, label: 'Active parts protected by AI' },
+    { t: 6.4, f: FIN[3], txt: '5:00 → 2:00', label: 'Minutes to check in a truck' },
+    { t: 7.65, f: FIN[2], to: 88, suf: '%', label: 'Fewer high-risk parts' },
+    { t: 8.9, f: FIN[4], to: 0, label: 'Fatalities on the road' },
+  ];
+  const n = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '230px', fontSize: '300px' });
+  const lb = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '540px', fontSize: '32px', color: 'var(--white)' });
+  const tiles = STATS.map(st => { const c = div(r, 'abs', { left: (960 - 130) + 'px', top: '640px', width: '260px', height: '200px' }); logoTile(c, st.f, 260, 147); return c; });
+  STATS.forEach(st => { sfx(st.t, 'hit', .75); hit(st.t, .6); });
+  sfx(10.0, 'whoosh', .6);
   return (t) => {
-    const lc = t - C[2].a;
-    pl.set({ url: clipUrl('B', lc * .92), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.04 + lc * .012, op: P(lc, 0, .5), br: .8, radius: 0 });
-    S(redg, { opacity: P(t, tW, tW + .25) * .75 });
-    reveal(a1, t, C[2].a, .07); reveal(a2, t, W(2, 'literally'), .07); reveal(a3, t, W(2, 'as'), .07);
-    wp.style.left = (150 + a3.offsetWidth + 46) + 'px';
-    const g = P(t, tW, tW + .35, E.lin); const on = t >= tW - .02;
-    const j = on && g < 1 ? (hash(Math.floor(t * 30)) - .5) * 30 * (1 - g) : 0;
-    S(wp, { opacity: on ? 1 : 0, transform: `translateX(${j}px) scale(${lerp(1.25, 1, P(t, tW, tW + .4))})`,
-      textShadow: on && g < 1 ? `${j * .6}px 0 #2a63c9, ${-j * .6}px 0 #fff` : 'none' });
-    chips.forEach((c, i) => { const p = P(t, i ? tC : tS, (i ? tC : tS) + .5, E.outBack); S(c, { opacity: clamp(p * 2), transform: `translateY(${(1 - p) * 40}px)` }); });
+    const lt = t - a;
+    bgp.set({ url: clipUrl('B', lt * .75), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.06 + lt * .015, op: P(lt, 0, .3), radius: 0, sat: .7 });
+    let k = -1; STATS.forEach((st, i) => { if (t >= st.t) k = i; });
+    const end = t >= 10.05;
+    tiles.forEach((c, i) => { const on = i === k && !end; const p = on ? P(t, STATS[i].t + .05, STATS[i].t + .4, E.outCubic) : 0;
+      S(c, { opacity: p, transform: `translateY(${(1 - p) * 30}px)` }); });
+    if (k < 0 || end) { n.textContent = ''; lb.textContent = ''; return; }
+    const st = STATS[k], p = P(t, st.t, st.t + .45, E.outCubic);
+    n.innerHTML = st.txt ? st.txt.replace('→', '<span class="red">→</span>') : fmt(lerp(st.to ? 0 : 0, st.to, p)) + (st.suf ? `<span class="red">${st.suf}</span>` : '');
+    S(n, { transform: `scale(${lerp(1.18, 1, P(t, st.t, st.t + .35))})`, opacity: P(t, st.t, st.t + .06) });
+    lb.textContent = st.label; S(lb, { opacity: P(t, st.t + .15, st.t + .35) });
   };
 });
 
@@ -300,7 +297,35 @@ FIN.forEach((f, i) => {
 // ======================================================================
 // 01 INTEL — MARKET INTELLIGENCE
 // ======================================================================
-shot(19.5, C[5].a - .05, (r, a) => {
+shot(19.5, C[2].a, (r, a) => {
+  const pl = plate(r);
+  const lab = div(r, 'lbl abs', { left: '154px', top: '250px' }, 'Intel · Finalist 01');
+  const l1 = words(r, "I've never seen", 'D', { left: '150px', top: '300px', fontSize: '150px' });
+  const l2 = words(r, 'conditions like this.', 'D', { left: '150px', top: '440px', fontSize: '150px' });
+  sfx(W(1, 'conditions'), 'hit', .5);
+  return (t) => {
+    const lt = t - a;
+    pl.set({ src: 1.0, crop: [0, 68, 1672, 944], x: 1540, y: 745, w: 580, h: 327, zoom: 1 + lt * .03, ry: -16, op: P(lt, .2, .7) * .8, br: .7 });
+    S(lab, { opacity: P(lt, .1, .4) });
+    reveal(l1, t, C[1].a - .1, .07); reveal(l2, t, W(1, 'conditions') - .1, .07);
+  };
+});
+shot(C[2].a, C[4].a, (r, a) => {
+  const lab = div(r, 'lbl abs', { left: '154px', top: '200px' }, 'The operating environment');
+  const a1 = words(r, 'Supply chains', 'D', { left: '150px', top: '250px', fontSize: '170px' });
+  const a2 = words(r, 'are being used', 'D', { left: '150px', top: '400px', fontSize: '170px', color: 'rgba(245,247,251,.6)' });
+  const a3 = words(r, 'as a weapon', 'D', { left: '150px', top: '550px', fontSize: '170px' });
+  const bar = div(r, 'abs', { left: '154px', top: '720px', width: '220px', height: '8px', background: 'var(--sky)', transformOrigin: '0 50%' });
+  const tW = W(2, 'weapon');
+  sfx(tW, 'hit', .45);
+  return (t) => {
+    const lt = t - a;
+    S(lab, { opacity: P(lt, 0, .3) });
+    reveal(a1, t, a, .07); reveal(a2, t, W(2, 'literally'), .07); reveal(a3, t, W(2, 'as'), .07);
+    S(bar, { transform: `scaleX(${P(t, tW, tW + .5, E.inOutExpo)})` });
+  };
+});
+shot(C[4].a, C[5].a - .05, (r, a) => {
   const pl = plate(r);
   const lab = div(r, 'lbl abs', { left: '120px', top: '250px' }, 'Intel · Finalist 01');
   const h = words(r, 'Platform MI', 'D', { left: '114px', top: '310px', fontSize: '124px' });
@@ -332,7 +357,7 @@ shot(C[5].a - .05, C[6].a, (r, a) => {
     reveal(f2, t, tF - .1, .06, .6);
   };
 });
-shot(C[6].a, C[7].a, (r, a) => {
+shot(C[6].a, CARD_T[1], (r, a) => {
   const pl = plate(r);
   const n = div(r, 'D abs', { left: '1140px', top: '250px', fontSize: '280px' });
   const lbl = words(r, 'Active part numbers protected', 'U', { left: '1150px', top: '510px', fontSize: '38px', fontWeight: 600, width: '700px', whiteSpace: 'normal' });
@@ -346,30 +371,10 @@ shot(C[6].a, C[7].a, (r, a) => {
     reveal(lbl, t, t5 + .3, .05);
   };
 });
-shot(C[7].a, 35.5, (r, a) => {
-  const pl = plate(r);
-  const s = svg(r, 240, 280, { left: '330px', top: '330px' });
-  const sh = sv(s, 'path', { d: 'M120 10 L225 50 V140 C225 205 175 250 120 270 C65 250 15 205 15 140 V50 Z', fill: 'none', stroke: '#e3243b', 'stroke-width': 10, 'stroke-linejoin': 'round' });
-  const ck = sv(s, 'path', { d: 'M70 140 L108 178 L175 105', fill: 'none', stroke: '#f5f7fb', 'stroke-width': 12, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
-  const n = div(r, 'D abs', { left: '660px', top: '300px', fontSize: '300px' });
-  const lbl = div(r, 'lbl abs', { left: '670px', top: '590px', fontSize: '30px', color: 'var(--white)' }, 'In revenue shielded');
-  const t2 = W(7, '2');
-  sfx(t2 - .1, 'ticks', .5); sfx(W(7, 'shielded'), 'hit', .8); hit(W(7, 'shielded'), .7);
-  return (t) => {
-    const lt = t - a;
-    pl.set({ src: 21, crop: [0, 68, 1672, 944], w: 1920, h: 1080, zoom: 1.1 + lt * .03, op: .5, blur: 12, br: .28, radius: 0 });
-    strokeDraw(sh, P(lt, .1, 1.2, E.inOutCubic)); strokeDraw(ck, P(t, W(7, 'shielded'), W(7, 'shielded') + .4));
-    const v = lerp(0, 2, P(t, t2 - .2, t2 + .6, E.outCubic));
-    n.innerHTML = `<span style="color:var(--sky);font-size:.55em;vertical-align:.55em">≈</span>$${v.toFixed(v < 1.95 ? 1 : 0)}B`;
-    S(n, { opacity: P(t, t2 - .4, t2 - .1) });
-    S(lbl, { opacity: P(t, t2 + .3, t2 + .7) });
-  };
-});
-
 // ======================================================================
 // 02 GOFO
 // ======================================================================
-shot(37.5, C[9].a, (r, a) => {
+shot(CARD_T[1] + 2, C[9].a, (r, a) => {
   const sp = speaker(r, 'Ron Jansen', 'GOFO', t => faceSrc('ron', srcAt(t)));
   const lab = div(r, 'lbl abs', { left: '1160px', top: '300px' }, 'GOFO · Finalist 02');
   const q = words(r, '“Imagine you’re sitting there…”', 'U', { left: '1160px', top: '345px', fontSize: '40px', fontWeight: 500, color: 'rgba(245,247,251,.85)', fontStyle: 'italic' });
@@ -455,7 +460,7 @@ shot(C[12].a, C[13].a, (r, a) => {
     pl.set({ src: 36.6, crop: [100, 225, 1480, 210], x: 960, y: 700, w: 1500, h: 213, zoom: 1, op: P(lt, .3, .8), ty: (1 - P(lt, .3, .9)) * 80, rx: 18, radius: 12 });
   };
 });
-shot(C[13].a, 54.5, (r, a) => {
+shot(C[13].a, CARD_T[2], (r, a) => {
   const pl = plate(r);
   const h1 = words(r, 'Built from', 'D', { left: '150px', top: '220px', fontSize: '180px' });
   const h2 = div(r, 'D abs red', { left: '150px', top: '390px', fontSize: '330px' }, 'Zero');
@@ -482,7 +487,7 @@ shot(C[13].a, 54.5, (r, a) => {
 // ======================================================================
 // 03 INTEL — CONTROL TOWER
 // ======================================================================
-shot(56.5, C[16].a, (r, a) => {
+shot(CARD_T[2] + 2, C[16].a, (r, a) => {
   const sp = speaker(r, 'Andrew Wadolny', 'Intel', t => faceSrc('wad', srcAt(t)));
   const lab = div(r, 'lbl abs', { left: '1010px', top: '260px' }, 'Intel · Chemical & gas supply');
   const h1 = words(r, 'The last line', 'D', { left: '990px', top: '310px', fontSize: '150px' });
@@ -538,7 +543,7 @@ shot(W(17, '88%') - .1, W(17, 'worst'), (r, a) => {
     pl.set({ src: 57.5, crop: [0, 60, 1680, 880], x: 1290, y: 450, w: 1000, h: 524, zoom: lerp(1, 1.9, P(lt, 1.5, 4.5, E.inOutCubic)), px: .7, py: -.4, ry: -14, op: P(lt, .2, .7), tx: (1 - P(lt, .2, .8)) * 200 });
   };
 });
-shot(W(17, 'worst'), 72.5, (r, a) => {
+shot(W(17, 'worst'), CARD_T[3], (r, a) => {
   const pl = plate(r);
   const N = 6, rows = [];
   for (let i = 0; i < N; i++) rows.push(div(r, 'abs', { left: '200px', top: (210 + i * 90) + 'px', height: '58px', width: (620 - i * 60) + 'px', background: 'rgba(143,182,255,.16)', borderRadius: '6px', transformOrigin: '0 50%' }));
@@ -566,7 +571,7 @@ shot(W(17, 'worst'), 72.5, (r, a) => {
 // ======================================================================
 // 04 GEORGIA-PACIFIC × project44
 // ======================================================================
-shot(74.5, C[22].a, (r, a) => {
+shot(CARD_T[3] + 2, C[22].a, (r, a) => {
   const pl = plate(r);
   const lab = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '120px', color: 'var(--white)' },
     '<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--red);margin-right:16px;vertical-align:middle"></span>Live yard call · Georgia-Pacific');
@@ -657,7 +662,7 @@ shot(C[24].a, C[25].a, (r, a) => {
     S(road, { opacity: P(lt, 0, .3) });
   };
 });
-shot(C[25].a, 92.5, (r, a) => {
+shot(C[25].a, CARD_T[4], (r, a) => {
   const pre = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '290px', color: 'var(--white)' }, 'Georgia-Pacific × project44');
   const h = words(r, 'Shipper of choice', 'D', { left: '0', width: '1920px', textAlign: 'center', top: '340px', fontSize: '230px' });
   const bar = div(r, 'abs', { left: '760px', top: '580px', width: '400px', height: '10px', background: 'var(--red)', transformOrigin: '50% 50%' });
@@ -673,7 +678,7 @@ shot(C[25].a, 92.5, (r, a) => {
 // ======================================================================
 // 05 RELIANCE INDUSTRIES
 // ======================================================================
-shot(94.5, C[27].a, (r, a) => {
+shot(CARD_T[4] + 2, C[29].a, (r, a) => {
   const pl = plate(r);
   const lab = div(r, 'lbl abs', { left: '150px', top: '250px' }, "The stakes · India's roads");
   const h1 = words(r, 'A death every', 'D', { left: '140px', top: '300px', fontSize: '170px' });
@@ -698,28 +703,6 @@ shot(94.5, C[27].a, (r, a) => {
     S(s, { opacity: P(lt, 0, .4) });
   };
 });
-shot(C[27].a, C[29].a, (r, a) => {
-  const sp = speaker(r, 'Arush Kishore', 'Reliance Industries', (t, lt) => ({ src: clamp(88.7 + lt * .9, 88.7, 92.3), crop: [92, 255, 460, 320] }));
-  const h1 = words(r, 'Safety', 'D', { left: '960px', top: '220px', fontSize: '200px' });
-  const h2 = div(r, 'D abs', { left: '960px', top: '400px', fontSize: '200px' }, 'is not a');
-  const cost = div(r, 'D abs', { left: '960px', top: '580px', fontSize: '200px' }, 'cost');
-  const strike = div(r, 'abs', { left: '950px', top: '660px', width: '360px', height: '14px', background: 'var(--red)', transformOrigin: '0 50%' });
-  const eff = words(r, 'it drives efficiency', 'D red', { left: '960px', top: '580px', fontSize: '200px' });
-  const tE = C[28].a;
-  sfx(W(27, 'cost'), 'hit', .7); sfx(tE, 'swipe', .8); sfx(W(28, 'efficiency'), 'hit', .8); hit(W(28, 'efficiency'), .6);
-  return (t) => {
-    const lt = t - a;
-    sp(t, lt, { x: 470, y: 470, w: 700, h: 487, ry: 8 });
-    reveal(h1, t, a, .07);
-    S(h2, { opacity: P(t, W(27, 'is'), W(27, 'is') + .2) });
-    const sw = P(t, tE, tE + .3, E.inOutExpo);
-    S(cost, { opacity: P(t, W(27, 'cost'), W(27, 'cost') + .15) * (1 - P(t, tE + .25, tE + .45)) });
-    S(strike, { transform: `scaleX(${sw})`, opacity: 1 - P(t, tE + .25, tE + .45) });
-    S(h2, { opacity: P(t, W(27, 'is'), W(27, 'is') + .2) * (1 - P(t, tE + .25, tE + .45)) });
-    S(eff, { top: '400px', fontSize: '170px', whiteSpace: 'normal', width: '900px', lineHeight: '.9' });
-    reveal(eff, t, tE + .3, .07);
-  };
-});
 shot(C[29].a, C[30].a, (r, a) => {
   const pl = plate(r);
   const s = svg(r, 640, 640, { left: '640px', top: '60px' });
@@ -738,26 +721,41 @@ shot(C[29].a, C[30].a, (r, a) => {
     S(lbl, { opacity: P(t, tZ + .3, tZ + .7), transform: `translateY(${(1 - P(t, tZ + .3, tZ + .8)) * 24}px)` });
   };
 });
-shot(C[30].a, 110, (r, a) => {
+shot(C[30].a, 110.5, (r, a) => {
   const pl = plate(r);
   const n = div(r, 'D abs', { left: '150px', top: '190px', fontSize: '300px' });
   const nl = div(r, 'lbl abs', { left: '160px', top: '470px', fontSize: '30px', color: 'var(--white)' }, 'Smaller fleet');
-  const s = svg(r, 260, 260, { left: '1000px', top: '210px' });
-  const loop = sv(s, 'path', { d: 'M130 20 A110 110 0 1 1 30 85', fill: 'none', stroke: '#e3243b', 'stroke-width': 14, 'stroke-linecap': 'round' });
-  const head = sv(s, 'path', { d: 'M8 60 L30 95 L62 70', fill: 'none', stroke: '#e3243b', 'stroke-width': 14, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
-  const p1 = words(r, 'Pays for', 'D', { left: '1310px', top: '210px', fontSize: '150px' });
-  const p2 = words(r, 'itself', 'D red', { left: '1310px', top: '350px', fontSize: '150px' });
-  const fin = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '620px', fontSize: '84px', color: 'var(--sky)' }, 'From reactive to resilient');
+  // payback curve: cumulative return dips (investment), crosses break-even, keeps climbing
+  const s = svg(r, 820, 330, { left: '980px', top: '150px' });
+  const Z = 170;
+  sv(s, 'line', { x1: 0, x2: 820, y1: Z, y2: Z, stroke: 'rgba(245,247,251,.35)', 'stroke-width': 2, 'stroke-dasharray': '10 10' });
+  const be = sv(s, 'text', { x: 820, y: Z - 14, 'text-anchor': 'end', fill: 'rgba(245,247,251,.6)', 'font-family': 'Inter', 'font-weight': 600, 'font-size': 18, 'letter-spacing': '4' }); be.textContent = 'BREAK-EVEN';
+  const D = 'M0 170 C60 230 120 270 200 268 C280 266 320 210 360 170 C430 100 560 50 800 22';
+  const area = sv(s, 'path', { d: 'M360 170 C430 100 560 50 800 22 L800 170 Z', fill: 'rgba(227,36,59,.22)' });
+  const curve = sv(s, 'path', { d: D, fill: 'none', stroke: '#f5f7fb', 'stroke-width': 7, 'stroke-linecap': 'round' });
+  const dot = sv(s, 'circle', { cx: 360, cy: Z, r: 13, fill: '#e3243b' });
+  const ring = sv(s, 'circle', { cx: 360, cy: Z, r: 13, fill: 'none', stroke: '#e3243b', 'stroke-width': 4 });
+  const inv = sv(s, 'text', { x: 200, y: 310, 'text-anchor': 'middle', fill: 'rgba(245,247,251,.6)', 'font-family': 'Inter', 'font-weight': 600, 'font-size': 18, 'letter-spacing': '4' }); inv.textContent = 'INVESTMENT';
+  const roi = sv(s, 'text', { x: 470, y: 40, 'text-anchor': 'end', fill: '#e3243b', 'font-family': 'Barlow Condensed', 'font-weight': 800, 'font-size': 44, 'letter-spacing': '2' }); roi.textContent = 'RETURN';
+  const p1 = words(r, 'Pays for itself', 'D', { left: '982px', top: '500px', fontSize: '130px' });
+  p1.ws[2].classList.add('red');
+  const fin = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '700px', fontSize: '84px', color: 'var(--sky)' }, 'From reactive to resilient');
   const tS = Math.max(a + .25, W(30, 'smaller') - .5), tP = W(30, 'pays');
-  sfx(tS - .1, 'ticks', .6); sfx(tS + .6, 'hit', .8); hit(tS + .6, .6); sfx(tP, 'swipe', .6); sfx(W(30, 'itself'), 'hit', .8);
+  sfx(tS - .1, 'ticks', .6); sfx(tS + .6, 'hit', .8); hit(tS + .6, .6); sfx(tP - .6, 'riser_short', .5); sfx(tP + .15, 'hit', .8); hit(tP + .15, .5);
   return (t) => {
     const lt = t - a;
     pl.set({ src: 86, crop: [40, 200, 1640, 700], w: 1920, h: 1080, zoom: 1.2 + lt * .02, px: .2, op: .35, blur: 10, br: .28, radius: 0 });
     const v = P(t, tS - .1, tS + .6, E.outCubic);
     n.innerHTML = `−${Math.round(v * 46)}<span class="red">%</span>`; S(n, { opacity: P(t, tS - .2, tS) });
     S(nl, { opacity: P(t, tS + .4, tS + .7) });
-    strokeDraw(loop, P(t, tP - .1, tP + .7, E.inOutCubic)); S(head, { opacity: P(t, tP + .6, tP + .75) });
-    reveal(p1, t, tP, .07); reveal(p2, t, W(30, 'itself') - .1, .07);
+    const cp = P(t, tP - .6, tP + .9, E.inOutCubic);
+    strokeDraw(curve, cp); S(s, { opacity: P(t, tP - .8, tP - .5) });
+    const tX = tP - .6 + 1.5 * .5; // curve reaches break-even about halfway through the draw
+    S(area, { opacity: P(t, tX, tX + .5) * .9, clipPath: `inset(0 ${(1 - P(t, tX, tP + .9)) * 100}% 0 0)` });
+    S(dot, { opacity: P(t, tX - .05, tX + .05) });
+    const rp = P(t, tX, tX + .7, E.outCubic); ring.setAttribute('r', 13 + rp * 46); S(ring, { opacity: (1 - rp) * (t > tX ? 1 : 0) });
+    S(inv, { opacity: P(t, tP - .3, tP) }); S(roi, { opacity: P(t, tP + .7, tP + 1.0) }); S(be, { opacity: P(t, tP - .7, tP - .4) });
+    reveal(p1, t, W(30, 'pays') + .1, .07);
     S(fin, { opacity: P(t, W(30, 'itself') + .5, W(30, 'itself') + 1.1) });
   };
 });
@@ -765,8 +763,8 @@ shot(C[30].a, 110, (r, a) => {
 // ======================================================================
 // END: 5 finalists, 1 winner → EDGE Nashville → logo lockup
 // ======================================================================
-WIPES.push(110);
-shot(110, 113.6, (r, a) => {
+WIPES.push(110.5);
+shot(110.5, 114.0, (r, a) => {
   const bgp = plate(r);
   const shade = div(r, 'abs', { inset: '0', background: 'rgba(5,13,29,.55)' });
   const TW = 300, TH = 170, GAP = 40, X0 = 960 - (5 * TW + 4 * GAP) / 2;
@@ -777,8 +775,8 @@ shot(110, 113.6, (r, a) => {
     return c;
   });
   const h1 = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '520px', fontSize: '230px', textShadow: '0 10px 60px rgba(0,0,0,.6)' });
-  sfx(110, 'hit', .9); FIN.forEach((f, i) => sfx(110.1 + i * .09, 'pop', .4));
-  sfx(111.6, 'hit', .8); sfx(112.6, 'boom', 1); hit(112.6, 1.2);
+  sfx(110.5, 'hit', .9); FIN.forEach((f, i) => sfx(110.6 + i * .09, 'pop', .4));
+  sfx(112.1, 'hit', .8); sfx(113.1, 'boom', 1); hit(113.1, 1.2);
   return (t) => {
     const lt = t - a;
     bgp.set({ url: clipUrl('A', 3.2 + lt * .95), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.08 - lt * .01, op: 1, radius: 0 });
@@ -792,7 +790,7 @@ shot(110, 113.6, (r, a) => {
     S(h1, { opacity: P(lt, 1.15, 1.3), transform: `scale(${one ? lerp(1.25, 1, P(lt, 2.1, 2.5)) : lerp(1.15, 1, P(lt, 1.15, 1.5))})` });
   };
 });
-shot(113.6, 117.2, (r, a) => {
+shot(114.0, 117.4, (r, a) => {
   const bgp = plate(r);
   const shade = div(r, 'abs', { inset: '0', background: 'radial-gradient(ellipse at 50% 50%, rgba(5,13,29,.78) 0%, rgba(5,13,29,.6) 60%, rgba(5,13,29,.8) 100%)' });
   const pre = words(r, 'See them live at', 'lbl', { left: '0', width: '1920px', textAlign: 'center', top: '180px', fontSize: '30px', color: 'var(--white)' });
@@ -813,7 +811,7 @@ shot(113.6, 117.2, (r, a) => {
     S(venue, { opacity: P(lt, 1.9, 2.3) });
   };
 });
-shot(117.2, 120.01, (r, a) => {
+shot(117.4, 120.01, (r, a) => {
   const panel = div(r, 'abs', { inset: '0', background: '#f6f7fa' });
   const ti = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '250px', fontSize: '110px', color: '#0b2a5c' }, 'Supply Chain Innovation Award<sup style="font-size:.3em;vertical-align:top">™</sup>');
   const by = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '375px', color: '#5a6b86' }, 'by CSCMP &amp; SupplyChainBrain');
@@ -846,7 +844,7 @@ NODES.forEach((n, i) => {
   const d = NODES.map((m, j) => [j, (m.x - n.x) ** 2 + (m.y - n.y) ** 2]).filter(x => x[0] !== i).sort((a, b) => a[1] - b[1]);
   for (let k = 0; k < 2; k++) if (!EDGES.find(e => (e[0] === d[k][0] && e[1] === i))) EDGES.push([i, d[k][0], rnd()]);
 });
-const redAmt = t => Math.max(P(t, W(2, 'weapon'), W(2, 'weapon') + .2) * (1 - P(t, 10.3, 10.6)), P(t, 94.5, 94.8) * (1 - P(t, C[27].a, C[27].a + .4)));
+const redAmt = t => 0;
 function drawBg(t) {
   const g = bg; g.setTransform(1, 0, 0, 1, 0, 0);
   g.fillStyle = '#050d1d'; g.fillRect(0, 0, 1920, 1080);
@@ -873,8 +871,8 @@ function drawGrain(t) { const f = Math.floor(t * FPS); const pat = grain.createP
 
 const capline = $('capline');
 function drawCaps(t) {
-  const c = CUES.find(c => t >= c.a - .05 && t < c.b + .2);
-  const end = t >= 117.2;
+  const c = CUES.find(c => c && t >= c.a - .05 && t < c.b + .2);
+  const end = t >= 117.4;
   if (!c || end) { capline.innerHTML = ''; $('capsband').style.opacity = end ? 0 : .6; return; }
   $('capsband').style.opacity = 1;
   capline.innerHTML = c.words.map(w => `<span style="color:${t >= w.t ? 'rgba(245,247,251,1)' : 'rgba(245,247,251,.4)'}">${w.w}</span>`).join(' ');
@@ -933,5 +931,5 @@ window.seek = async (t) => {
   await Promise.all(pending);
 };
 window.getSfx = () => SFX.sort((a, b) => a.t - b.t);
-window.getCues = () => CUES.map(c => ({ a: c.a, b: c.b, txt: c.txt }));
+window.getCues = () => CUES.filter(Boolean).map(c => ({ a: c.a, b: c.b, txt: c.txt }));
 })();
