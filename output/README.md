@@ -1,5 +1,14 @@
 # SCIA 2026 Highlight: Phase 2 deliverables
 
+## v6 changes (final polish)
+- **0:47 GOFO 3,000,000:** rolls from the first frame of the shot instead of sitting at 0,000,000. $1M, 66% and 20+ now also roll as soon as they appear.
+- **0:59–1:00 "Last line of defense" pop:** fixed. A rendering worker that started mid-shot measured text before its fonts loaded and shrank the title. Fonts now load up front and the fit-to-frame check runs once for the whole film, so every worker lays out identically.
+- **~1:07 88%:** centred in its ring and resized.
+- **Intel "weapon" shot:** now shows the "Weaponization of Supply Chains" iceberg from Intel's own storm slide, tying back to the cold open.
+- **Label spacing:** the "5,000", "$1M" and "66%" labels no longer clip their numbers.
+- **GOFO stat strip:** cropped below the slide heading.
+- **Title flash:** softened.
+
 ## v5 changes
 - **Cold open:** your supplied hook (Clive Hendricks, Intel): "I've been in supply chain now over twenty years. I've never seen conditions like this. To navigate today's challenges, we need new tools that can make us more agile." On screen:
   - a 20+ years odometer over the port aerial
@@ -39,7 +48,7 @@
 
 | File | What it is |
 |---|---|
-| `SCIA2026_Highlight_v5.mp4` | 2:00, 1920×1080, 30 fps, H.264. Finalist footage + motion graphics + captions + **finalist dialogue + synthesized SFX**. **No music, no VO** (yours to add). |
+| `SCIA2026_Highlight_v6.mp4` | 2:00, 1920×1080, 30 fps, H.264. Finalist footage + motion graphics + captions + **finalist dialogue + synthesized SFX**. **No music, no VO** (yours to add). |
 | `stems/dialogue.wav` | Finalist dialogue only, re-cut to the new timeline (48 kHz / 24-bit) |
 | `stems/sfx.wav` | Sound design only (whooshes, hits, ticks, PA chime, flip-board clacks, truck, clock) |
 | `stems/dialogue_plus_sfx.wav` | The audio that's in the MP4 |

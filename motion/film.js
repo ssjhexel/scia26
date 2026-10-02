@@ -329,6 +329,7 @@ shot(CARD_T[0] + 2, C[4].a, (r, a) => {
   const a2 = words(r, 'are being used', 'D', { left: '150px', top: '400px', fontSize: '170px', color: 'rgba(245,247,251,.6)' });
   const a3 = words(r, 'as a weapon', 'D', { left: '150px', top: '550px', fontSize: '170px' });
   const bar = div(r, 'abs', { left: '154px', top: '720px', width: '220px', height: '8px', background: 'var(--sky)', transformOrigin: '0 50%' });
+  const ice = plate(r);
   const tW = W(2, 'weapon');
   sfx(tW - .3, 'accent', .4);
   return (t) => {
@@ -336,6 +337,8 @@ shot(CARD_T[0] + 2, C[4].a, (r, a) => {
     S(lab, { opacity: P(lt, 0, .3) });
     reveal(a1, t, a, .07); reveal(a2, t, W(2, 'literally'), .07); reveal(a3, t, W(2, 'as'), .07);
     S(bar, { transform: `scaleX(${P(t, tW, tW + .5, E.inOutExpo)})` });
+    const ip = P(lt, .3, 1.1, E.outCubic);
+    ice.set({ url: hookUrl(7.5), crop: [1130, 430, 520, 306], x: 1530, y: 500, w: 620, h: 365, zoom: 1.0 + lt * .025, ry: -14, op: ip, tx: (1 - ip) * 160, br: lerp(.9, 1, P(t, tW, tW + .4)) });
   };
 });
 shot(C[4].a, C[5].a - .05, (r, a) => {
@@ -373,7 +376,7 @@ shot(C[5].a - .05, C[6].a, (r, a) => {
 shot(C[6].a, CARD_T[1], (r, a) => {
   const pl = plate(r);
   const n = odometer(r, '5,000', { left: '1140px', top: '250px', fontSize: '280px' });
-  const lbl = words(r, 'Active part numbers protected', 'U', { left: '1150px', top: '510px', fontSize: '38px', fontWeight: 600, width: '700px', whiteSpace: 'normal' });
+  const lbl = words(r, 'Active part numbers protected', 'U', { left: '1150px', top: '560px', fontSize: '38px', fontWeight: 600, width: '700px', whiteSpace: 'normal' });
   const t5 = W(6, '5,000');
   sfx(t5 - .1, 'ticks', .5); sfx(t5 + .9, 'lock', .6);
   return (t) => {
@@ -450,27 +453,16 @@ shot(C[10].a, C[12].a, (r, a) => {
 });
 shot(C[12].a, C[13].a, (r, a) => {
   const pl = plate(r);
-  const od = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '170px', fontSize: '290px', height: '260px', overflow: 'hidden' });
-  const target = '3,000,000';
-  const cols = [...target].map((ch, i) => {
-    const c = document.createElement('span'); c.style.display = 'inline-block'; c.style.verticalAlign = 'top'; c.style.height = '250px'; c.style.overflow = 'hidden';
-    const strip = document.createElement('span'); strip.style.display = 'inline-block';
-    strip.innerHTML = ch === ',' ? ',' : [...Array(10).keys()].map(k => `<div style="height:250px;line-height:250px">${k}</div>`).join('') + `<div style="height:250px;line-height:250px">${ch}</div>`;
-    c.appendChild(strip); od.appendChild(c); return { strip, ch };
-  });
+  const od = odometer(r, '3,000,000', { left: '0', width: '1920px', textAlign: 'center', top: '160px', fontSize: '290px' });
   const lbl = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '460px', fontSize: '34px', color: 'var(--white)' }, 'Packages · per day');
   const t3 = W(12, 'three');
-  sfx(t3 - .2, 'ticks', .6); sfx(t3 + .9, 'lock', .8); sfx(t3 + 1.0, 'shimmer', .35, 7); hit(t3 + .9, .5);
+  sfx(a + .05, 'ticks', .45); sfx(t3 - .1, 'ticks', .4); sfx(t3 + .9, 'lock', .8); sfx(t3 + 1.0, 'shimmer', .35, 7); hit(t3 + .9, .5);
   return (t) => {
     const lt = t - a;
-    cols.forEach(({ strip, ch }, i) => {
-      if (ch === ',') return;
-      const p = P(t, t3 - .2 + i * .05, t3 + .7 + i * .06, E.outCubic);
-      strip.style.transform = `translateY(${-p * 10 * 250}px)`;
-    });
+    roll(od, t, a + .05, t3 + .9, E.outCubic);
     S(od, { opacity: P(t, a, a + .2) });
     S(lbl, { opacity: P(t, t3 + .6, t3 + 1) });
-    pl.set({ src: 36.6, crop: [100, 225, 1480, 210], x: 960, y: 700, w: 1500, h: 213, zoom: 1, op: P(lt, .3, .8), ty: (1 - P(lt, .3, .9)) * 80, rx: 18, radius: 12 });
+    pl.set({ src: 36.6, crop: [100, 238, 1480, 196], x: 960, y: 700, w: 1500, h: 213, zoom: 1, op: P(lt, .3, .8), ty: (1 - P(lt, .3, .9)) * 80, rx: 18, radius: 12 });
   };
 });
 shot(C[13].a, CARD_T[2], (r, a) => {
@@ -525,14 +517,14 @@ shot(C[16].a, W(17, '88%') - .1, (r, a) => {
   const hand = sv(s, 'line', { x1: 260, y1: 260, x2: 260, y2: 70, stroke: '#f5f7fb', 'stroke-width': 10, 'stroke-linecap': 'round' });
   sv(s, 'circle', { cx: 260, cy: 260, r: 16, fill: '#f5f7fb' });
   const n = odometer(r, '$1M', { left: '800px', top: '200px', fontSize: '330px' }, { cycles: 2 });
-  const l1 = div(r, 'D abs', { left: '806px', top: '480px', fontSize: '100px', color: 'var(--sky)' }, 'per site · per day');
-  const l2 = div(r, 'lbl abs', { left: '810px', top: '600px', color: 'var(--white)' }, 'Revenue impact of a line-down');
+  const l1 = div(r, 'D abs', { left: '806px', top: '545px', fontSize: '100px', color: 'var(--sky)' }, 'per site · per day');
+  const l2 = div(r, 'lbl abs', { left: '810px', top: '660px', color: 'var(--white)' }, 'Revenue impact of a line-down');
   const tM = W(16, 'million');
   sfx(tM - .3, 'ticks', .5); sfx(tM + .5, 'lock', .75); hit(tM + .5, .35);
   return (t) => {
     const lt = t - a;
     pl.set({ src: 49, crop: [0, 60, 1680, 880], w: 1920, h: 1080, zoom: 1.1 + lt * .03, op: .5, blur: 12, br: .28, radius: 0 });
-    roll(n, t, tM - .4, tM + .5);
+    roll(n, t, tM - .5, tM + .5, E.outCubic);
     S(n, { opacity: P(t, tM - .5, tM - .3) });
     strokeDraw(arc, (lt * .5) % 1); hand.setAttribute('transform', `rotate(${lt * 180} 260 260)`);
     S(s, { opacity: P(lt, 0, .4) });
@@ -544,7 +536,7 @@ shot(W(17, '88%') - .1, W(17, 'worst'), (r, a) => {
   const s = svg(r, 560, 560, { left: '140px', top: '130px' });
   sv(s, 'circle', { cx: 280, cy: 280, r: 240, fill: 'none', stroke: 'rgba(143,182,255,.16)', 'stroke-width': 30 });
   const ring = sv(s, 'circle', { cx: 280, cy: 280, r: 240, fill: 'none', stroke: '#e3243b', 'stroke-width': 30, transform: 'rotate(-90 280 280)', 'stroke-linecap': 'butt' });
-  const n = odometer(r, '88%', { left: '140px', width: '560px', textAlign: 'center', top: '310px', fontSize: '230px' }, { cycles: 1 });
+  const n = odometer(r, '88%', { left: '140px', width: '560px', textAlign: 'center', top: Math.round(410 - 190 * .53) + 'px', fontSize: '190px' }, { red: ['%'], cycles: 1 });
   const lbl = words(r, 'Reduction in high-risk IPNs', 'U', { left: '160px', top: '740px', width: '560px', textAlign: 'center', fontSize: '34px', fontWeight: 600, whiteSpace: 'normal' });
   sfx(a + .05, 'ticks', .5); sfx(a + 1.2, 'lock', .7); sfx(a + 1.25, 'shimmer', .3, 3); hit(a + 1.2, .3);
   return (t) => {
@@ -642,13 +634,13 @@ shot(C[22].a, C[23].a, (r, a) => {
 shot(C[23].a, C[24].a, (r, a) => {
   const pl = plate(r);
   const n = odometer(r, '66%', { left: '130px', top: '180px', fontSize: '420px' }, { red: ['%'], cycles: 1 });
-  const l = words(r, 'Less check-in time', 'D', { left: '140px', top: '560px', fontSize: '96px', color: 'var(--sky)' });
+  const l = words(r, 'Less check-in time', 'D', { left: '140px', top: '600px', fontSize: '96px', color: 'var(--sky)' });
   const t6 = W(23, '66%');
   sfx(t6 - .2, 'ticks', .5); sfx(t6 + .5, 'lock', .8); sfx(t6 + .55, 'shimmer', .3, 5); hit(t6 + .5, .4);
   return (t) => {
     const lt = t - a;
-    roll(n, t, t6 - .3, t6 + .5);
-    S(n, { opacity: P(t, t6 - .4, t6 - .2) });
+    roll(n, t, a + .05, t6 + .5, E.outCubic);
+    S(n, { opacity: P(t, a, a + .15) });
     reveal(l, t, t6 + .3, .06);
     pl.set({ src: 73.5, crop: [180, 130, 1320, 780], x: 1420, y: 460, w: 820, h: 485, zoom: 1 + lt * .03, ry: -16, op: P(lt, 0, .5), tx: (1 - P(lt, 0, .6)) * 200 });
   };
@@ -926,7 +918,7 @@ function camera(t) {
   const drift = Math.sin(t * .4) * 4;
   world.style.transform = `translate(${x + drift}px,${y}px) scale(${1 + a * .012})`;
   const fl = FLASHES.find(x => t >= x && t < x + .35);
-  $('flash').style.opacity = fl !== undefined ? .55 * (1 - (t - fl) / .35) : 0;
+  $('flash').style.opacity = fl !== undefined ? .32 * (1 - (t - fl) / .35) : 0;
 }
 
 // safety net: no display type may leave the frame (shrinks font once, layout-based so it's deterministic)
@@ -946,7 +938,11 @@ function fitAll(root) {
 }
 let preloaded = false;
 window.seek = async (t) => {
-  if (!preloaded) { await Promise.all(PRELOAD); preloaded = true; }
+  if (!preloaded) {
+    await Promise.all(PRELOAD); await document.fonts.ready;
+    for (const s of SHOTS) { s.root.style.display = 'block'; fitAll(s.root); s.root.style.display = 'none'; s.fitted = true; }
+    preloaded = true;
+  }
   pending = [];
   drawBg(t);
   for (const s of SHOTS) {

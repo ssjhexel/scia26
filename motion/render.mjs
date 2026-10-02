@@ -21,6 +21,9 @@ async function openPage(browser) {
   await page.addInitScript(`window.TL=${JSON.stringify(TL)};window.ENV=${JSON.stringify(ENV)};`);
   await page.goto('file://' + path.join(ROOT, 'index.html'));
   await page.evaluate(() => document.fonts.ready);
+  // load every face up front: a worker that starts mid-film must measure text with the real fonts
+  await page.evaluate(() => Promise.all(['800 100px "Barlow Condensed"', '700 100px "Barlow Condensed"', '400 20px Inter', '500 20px Inter',
+    '600 20px Inter', '700 20px Inter', 'italic 500 20px Inter'].map(f => document.fonts.load(f))));
   await page.waitForFunction(() => typeof window.seek === 'function');
   return page;
 }
