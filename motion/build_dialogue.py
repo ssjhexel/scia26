@@ -2,13 +2,14 @@
 # and write a per-frame loudness envelope (env.json) for audio-reactive graphics.
 import json, numpy as np, soundfile as sf
 tl = json.load(open('timeline.json'))
-a, sr = sf.read('assets/dialogue_src.wav')
+SRC = {'rough': sf.read('assets/dialogue_src.wav'), 'hook': sf.read('assets/hook_src.wav')}
+sr = SRC['rough'][1]
 N = int(tl['duration'] * sr)
 out = np.zeros((N, 2))
 F = int(0.012 * sr)
 for c in tl['clips']:
     s0, s1 = (int(x * sr) for x in c['src'])
-    seg = a[s0:s1].copy()
+    seg = SRC[c.get('file', 'rough')][0][s0:s1].copy()
     ramp = np.linspace(0, 1, F)[:, None]
     seg[:F] *= ramp; seg[-F:] *= ramp[::-1]
     d0 = int(c['dst'] * sr)

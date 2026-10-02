@@ -1,5 +1,14 @@
 # SCIA 2026 Highlight: Phase 2 deliverables
 
+## v5 changes
+- **Cold open:** your supplied hook (Clive Hendricks, Intel): "I've been in supply chain now over twenty years. I've never seen conditions like this. To navigate today's challenges, we need new tools that can make us more agile." On screen:
+  - a 20+ years odometer over the port aerial
+  - "I've never seen conditions like this"
+  - a slow push into Intel's own "Weathering the Supply Chain Storm" slide (the supply-chain ship among risk icebergs), with "We need new tools"
+- **"From firefighting to foresight"** is back in Intel's segment. The segment now opens directly on "Supply chains are being used as a weapon…", so "never seen conditions" is only heard in the cold open.
+- The proof montage was removed, since your hook fills the opening.
+- **Timing:** finalist cards now start at 0:17.5 / 0:36.5 / 0:55.5 / 1:13.5 / 1:33.5. The ending starts at 1:51, and the white logo card at 1:57.5.
+
 ## v4 changes
 - **Hook:** Intel's "from firefighting to foresight" now opens the film. Intel's segment cuts from "with Platform MI in place," straight to "5,000 parts protected", so the line isn't heard twice. Reliance's "Safety is not a cost" (with Arush on camera) is back in their segment.
 - **Count-ups:** every counter is now a rolling-digit odometer with the layout locked to the final number, so nothing jitters or re-centres. Digits roll continuously with soft edge fades and a little motion blur.
@@ -30,7 +39,7 @@
 
 | File | What it is |
 |---|---|
-| `SCIA2026_Highlight_v4.mp4` | 2:00, 1920×1080, 30 fps, H.264. Finalist footage + motion graphics + captions + **finalist dialogue + synthesized SFX**. **No music, no VO** (yours to add). |
+| `SCIA2026_Highlight_v5.mp4` | 2:00, 1920×1080, 30 fps, H.264. Finalist footage + motion graphics + captions + **finalist dialogue + synthesized SFX**. **No music, no VO** (yours to add). |
 | `stems/dialogue.wav` | Finalist dialogue only, re-cut to the new timeline (48 kHz / 24-bit) |
 | `stems/sfx.wav` | Sound design only (whooshes, hits, ticks, PA chime, flip-board clacks, truck, clock) |
 | `stems/dialogue_plus_sfx.wav` | The audio that's in the MP4 |
@@ -43,25 +52,24 @@ The dialogue+SFX audio sits at about **-21 LUFS** integrated (peaks at -1.5 dBFS
 ## Structure
 | Time | Section |
 |---|---|
-| 0:00–0:03.5 | Hook: Intel, "…from firefighting to foresight." |
-| 0:03.5–0:10 | Proof montage: five headline numbers with finalist logos |
+| 0:00–0:10 | Cold open (supplied hook): Clive Hendricks, Intel. 20+ years · never seen conditions like this · weathering the storm · we need new tools |
 | 0:10.5–0:17.5 | Title: CSCMP & SupplyChainBrain present · Supply Chain Innovation Award™ · finalists (VO1) |
-| 0:17.5–0:35 | 01 Intel: Market Intelligence (never seen conditions like this · used as a weapon · Platform MI · 5,000 parts) |
-| 0:35.5–0:54 | 02 GOFO (Ron Jansen on camera · 500K → 3M parcels/day · built from zero in 3 years · Atlas) |
-| 0:54.5–1:12 | 03 Intel: Control Tower (Andrew Wadolny on camera · last line of defense · $1M/site/day · 88% · best in class) |
-| 1:12.5–1:32 | 04 Georgia-Pacific × project44 (live yard call · Tom Cahill on camera · 5:00 → 2:00 · 66% · shipper of choice) |
-| 1:32.5–1:50 | 05 Reliance (a death every 3 minutes · Arush: safety is not a cost · zero fatalities · −46% fleet · pays for itself) |
-| 1:50–2:00 | 5 finalists → 1 winner → CSCMP EDGE Nashville Oct 4–7 → logo lockup |
+| 0:17.5–0:36 | 01 Intel: Market Intelligence (used as a weapon · Platform MI · firefighting → foresight · 5,000 parts) |
+| 0:36.5–0:55 | 02 GOFO (Ron Jansen on camera · 500K → 3M parcels/day · built from zero in 3 years · Atlas) |
+| 0:55.5–1:13 | 03 Intel: Control Tower (Andrew Wadolny on camera · last line of defense · $1M/site/day · 88% · best in class) |
+| 1:13.5–1:33 | 04 Georgia-Pacific × project44 (live yard call · Tom Cahill on camera · 5:00 → 2:00 · 66% · shipper of choice) |
+| 1:33.5–1:51 | 05 Reliance (a death every 3 minutes · Arush: safety is not a cost · zero fatalities · −46% fleet · pays for itself) |
+| 1:51–2:00 | 5 finalists → 1 winner → CSCMP EDGE Nashville Oct 4–7 → logo lockup |
 
 ## Please check before this goes public
 1. **GP "66%"**: the speaker says 5 min → 2 min, which is 60%. Their own title says "under 2" (so 66% ≈ 1:42). The graphic shows the clock landing on 2:00 and then "66%", as spoken. Consider having the clock land on "1:40", or confirm the number with GP.
 2. ~~Intel MI ≈$2B~~: cut in v3.
 3. **Card subtitles**: GOFO's ("Building a National Parcel Network from Zero with Atlas") and Reliance's are my wording, based on what they presented. Swap in the official submission titles if you have them.
-4. **Reliance speaker shot** (1:37–1:40) uses Arush Kishore's webcam from a moment just after the line he's saying, so lip sync is loose.
+4. **Reliance speaker shot** (1:38–1:41) uses Arush Kishore's webcam from a moment just after the line he's saying, so lip sync is loose.
 6. **Lower-third names** come from the Teams labels: Ron Jansen (GOFO), Andrew Wadolny (Intel), Tom Cahill. Tom is labelled "GP × project44" because I couldn't tell which company he's with. Confirm names and affiliations.
 7. **Reliance logo**: now your original file (`motion/assets/logo_reliance.png`).
 8. **project44** appears as text ("× project44") because no logo file was supplied.
-9. **Intel MI (Clive Hendricks)** has no on-camera shot: his webcam tile is tiny and he's turned away from camera.
+9. **Intel MI (Clive Hendricks)** has no on-camera shot: his webcam tile is tiny and he's turned away from camera. He's credited as a name only in the cold open; confirm the spelling.
 5. **Event dates**: "Mon · Oct 5: finalists present live" and "Tue · Oct 6: winner revealed on the main stage" come from your brief.
 
 ## Re-rendering / editing (in `motion/`)

@@ -21,8 +21,8 @@ function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = 
 const hash = (n) => mulberry32(n * 9301 + 49297)();
 
 // ---------- time mapping ----------
-const CUES = TL.cues.map(([s, e, txt]) => {
-  const c = TL.clips.find(c => s >= c.src[0] - .06 && s < c.src[1]);
+const CUES = TL.cues.map(([s, e, txt, file = 'rough']) => {
+  const c = TL.clips.find(c => (c.file || 'rough') === file && s >= c.src[0] - .06 && s < c.src[1]);
   if (!c) return null;
   const off = c.dst - c.src[0];
   return { a: Math.max(c.dst, s + off), b: Math.min(e, c.src[1]) + off, txt };
@@ -78,6 +78,7 @@ const srcAt = t => { const c = TL.clips.find(c => t >= c.dst && t < c.dst + (c.s
 const FACES = { ron: [428, 696, 630, 354], wad: [697, 827, 540, 276], tom: [1026, 1314, 612, 348] };
 const faceSrc = (id, s) => { const [a, b, w, h] = FACES[id]; return { url: `assets/faces/${id}/${String(clamp(Math.floor(s * SRC_FPS) + 1, a, b)).padStart(5, '0')}.jpg`, crop: [0, 0, w, h], nat: [w, h] }; };
 const CLIPN = { A: 207, B: 151 };
+const hookUrl = t => `assets/hook/${String(clamp(Math.floor(t * SRC_FPS) + 1, 1, 175)).padStart(5, '0')}.jpg`;
 const clipUrl = (k, t) => `assets/clip${k}/${String(clamp(Math.floor(t * 30) + 1, 1, CLIPN[k])).padStart(4, '0')}.jpg`;
 const LOGO = { intel: 'assets/logo_intel.jpg', gofo: 'assets/logo_gofo.jpg', gp: 'assets/logo_gp.jpg', rel: 'assets/logo_reliance.png',
   cscmp: 'assets/cscmp.png', scbw: 'assets/scb_white.png', edgew: 'assets/edge_white.png', edge: 'assets/edge.png', scb: 'assets/scb.png' };
@@ -188,61 +189,57 @@ const FIN = [
   { n: '04', name: 'Georgia-Pacific', with: '× project44', logo: 'gp', tag: 'Yard Operations', logoPad: [.26, .05], sub: 'From 5 Minutes to Under 2: Transforming Yard Operations with project44 YMS', p: { src: 66.5, crop: [0, 60, 1680, 900] }, th: { src: 66.5, crop: [560, 580, 420, 220] } },
   { n: '05', name: 'Reliance Industries', logo: 'rel', tag: 'Emergency Response Network', logoPad: [.2, .05], sub: 'From Reactive to Resilient: An Emergency Response Network', p: { src: 83.5, crop: [0, 60, 1680, 900] }, th: { src: 89, crop: [92, 255, 460, 320] } },
 ];
-const CARD_T = [17.5, 35.5, 54.5, 72.5, 92.5];
+const CARD_T = [17.5, 36.5, 55.5, 73.5, 93.5];
 
-// ---------------- HOOK: "from firefighting to foresight" ----------------
-shot(0, 3.5, (r) => {
+// ---------------- COLD OPEN (supplied hook): Clive Hendricks, Intel ----------------
+const HK = [31, 32, 33]; // hook cue indices
+shot(0, C[HK[1]].a, (r) => {
+  const bgp = plate(r);
+  const shade = div(r, 'abs', { inset: '0', background: 'linear-gradient(90deg, rgba(5,13,29,.9) 0%, rgba(5,13,29,.6) 60%, rgba(5,13,29,.45) 100%)' });
   const line = div(r, 'abs', { left: '0px', top: '539px', width: '1920px', height: '3px', background: 'var(--white)', transformOrigin: '50% 50%' });
-  const pl = plate(r);
-  const lab = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '190px' }, 'Intel · Market Intelligence');
-  const f1 = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '240px', fontSize: '250px' }, 'Firefighting');
-  const strike = div(r, 'abs', { left: '330px', top: '340px', width: '1260px', height: '14px', background: 'var(--red)', transformOrigin: '0 50%' });
-  const f2 = words(r, '→ Foresight', 'D', { left: '0', width: '1920px', textAlign: 'center', top: '490px', fontSize: '290px' });
-  f2.ws[1].classList.add('red');
-  const tTo = W(5, 'to'), tF = W(5, 'foresight');
-  sfx(0, 'riser', .35); sfx(.45, 'pulse', .55); sfx(tTo - .05, 'swipe', .7); sfx(tF - .02, 'accent', .7); sfx(tF + .05, 'shimmer', .45, 0); hit(tF, .35);
+  const num = odometer(r, '20+', { left: '150px', top: '250px', fontSize: '330px' }, { red: ['+'], cycles: 1 });
+  const yl = words(r, 'Years in supply chain', 'lbl', { left: '160px', top: '590px', fontSize: '30px', color: 'var(--white)' });
+  const who = div(r, 'lbl abs', { left: '160px', top: '650px' }, 'Clive Hendricks · Intel');
+  const tY = W(HK[0], 'twenty');
+  sfx(0, 'riser', .35); sfx(.45, 'pulse', .5); sfx(tY - .35, 'ticks', .45); sfx(tY + .45, 'lock', .6);
   return (t) => {
     const lp = P(t, .02, .45, E.inOutExpo), out = P(t, .45, .8, E.inOutExpo);
     S(line, { transform: `scaleX(${lp}) scaleY(${1 - out})`, opacity: 1 - out });
-    pl.set({ src: 13, crop: [0, 68, 1672, 944], w: 1920, h: 1080, zoom: 1.15 + t * .02, op: P(t, .5, 1.2) * .5, blur: 10, br: .3, radius: 0 });
-    S(lab, { opacity: P(t, .55, .9) });
-    S(f1, { opacity: P(t, .55, .7) * lerp(1, .35, P(t, tTo, tTo + .3)), transform: `scale(${lerp(1.08, 1, P(t, .55, 1.1))})` });
-    S(strike, { transform: `scaleX(${P(t, tTo, tTo + .35, E.inOutExpo)})` });
-    reveal(f2, t, tF - .1, .06, .6);
-    S(f2, { transform: `scale(${1 + P(t, tF, 3.5, E.lin) * .03})` });
+    bgp.set({ url: clipUrl('B', t * .6), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.1 + t * .01, op: P(t, .4, 1.2), radius: 0, sat: .6 });
+    roll(num, t, .55, tY + .45); S(num, { opacity: P(t, .5, .7) });
+    reveal(yl, t, tY - .1, .05); S(who, { opacity: P(t, 1.0, 1.4) });
   };
 });
-
-// ---------------- PROOF MONTAGE: one headline number per finalist ----------------
-shot(3.5, 10.5, (r, a) => {
+shot(C[HK[1]].a, C[HK[2]].a, (r, a) => {
   const bgp = plate(r);
-  const shade = div(r, 'abs', { inset: '0', background: 'radial-gradient(ellipse at 50% 45%, rgba(5,13,29,.72) 0%, rgba(5,13,29,.55) 55%, rgba(5,13,29,.85) 100%)' });
-  const C0 = { left: '0', width: '1920px', textAlign: 'center', top: '240px', fontSize: '300px' };
-  const STATS = [
-    { t: 3.6, f: FIN[1], el: odometer(r, '3,000,000', C0), label: 'Parcels a day, built from zero', p: 0 },
-    { t: 4.85, f: FIN[0], el: odometer(r, '5,000', C0), label: 'Active parts protected by AI', p: 3 },
-    { t: 6.1, f: FIN[3], el: div(r, 'D abs', C0, '5:00 <span class="red">→</span> 2:00'), label: 'Minutes to check in a truck', p: 5 },
-    { t: 7.35, f: FIN[2], el: odometer(r, '88%', C0, { red: ['%'], cycles: 1 }), label: 'Fewer high-risk parts', p: 7 },
-    { t: 8.6, f: FIN[4], el: div(r, 'D abs', C0, '0'), label: 'Fatalities on the road', p: 10 },
-  ];
-  const lb = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '550px', fontSize: '32px', color: 'var(--white)' });
-  const tiles = STATS.map(st => { const c = div(r, 'abs', { left: (960 - 130) + 'px', top: '640px', width: '260px', height: '200px' }); logoTile(c, st.f, 260, 147); return c; });
-  STATS.forEach((st, i) => { sfx(st.t, 'stab', .75, st.p); if (st.el.roll) sfx(st.t + .02, 'ticks', .35); sfx(st.t + .2, 'tap', .3, i * 2); hit(st.t, .25); });
-  sfx(9.75, 'whoosh', .55);
+  const shade = div(r, 'abs', { inset: '0', background: 'linear-gradient(90deg, rgba(5,13,29,.92) 0%, rgba(5,13,29,.65) 60%, rgba(5,13,29,.5) 100%)' });
+  const l1 = words(r, "I've never seen", 'D', { left: '150px', top: '300px', fontSize: '170px' });
+  const l2 = words(r, 'conditions like this.', 'D', { left: '150px', top: '460px', fontSize: '170px' });
+  sfx(W(HK[1], 'conditions') - .3, 'accent', .5); sfx(W(HK[1], 'conditions'), 'pulse', .45);
   return (t) => {
     const lt = t - a;
-    bgp.set({ url: clipUrl('B', lt * .75), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.06 + lt * .015, op: P(lt, 0, .3), radius: 0, sat: .7 });
-    let k = -1; STATS.forEach((st, i) => { if (t >= st.t) k = i; });
-    const end = t >= 9.85;
-    STATS.forEach((st, i) => {
-      const on = i === k && !end;
-      S(st.el, { display: on ? 'block' : 'none', opacity: P(t, st.t, st.t + .08), transform: `scale(${lerp(1.06, 1, P(t, st.t, st.t + .5, E.outCubic))})` });
-      if (on && st.el.roll) roll(st.el, t, st.t, st.t + 1.0, E.outCubic);
-      const p = on ? P(t, st.t + .05, st.t + .4, E.outCubic) : 0;
-      S(tiles[i], { opacity: p, transform: `translateY(${(1 - p) * 30}px)` });
-    });
-    if (k < 0 || end) { lb.textContent = ''; return; }
-    lb.textContent = STATS[k].label; S(lb, { opacity: P(t, STATS[k].t + .15, STATS[k].t + .35) });
+    bgp.set({ url: clipUrl('B', 1.45 + lt * .6), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.13 + lt * .01, op: 1, radius: 0, sat: .5 });
+    reveal(l1, t, a - .05, .07); reveal(l2, t, W(HK[1], 'conditions') - .1, .07);
+  };
+});
+shot(C[HK[2]].a, 10.5, (r, a) => {
+  const pl = plate(r);
+  const shade = div(r, 'abs', { inset: '0', background: 'linear-gradient(90deg, rgba(5,13,29,.94) 0%, rgba(5,13,29,.8) 34%, rgba(5,13,29,.15) 62%, rgba(5,13,29,.35) 100%)' });
+  const lab = div(r, 'lbl abs', { left: '154px', top: '250px' }, 'Weathering the supply chain storm');
+  const l1 = words(r, "To navigate today's challenges,", 'U', { left: '150px', top: '300px', fontSize: '46px', fontWeight: 600, color: 'rgba(245,247,251,.85)' });
+  const l2 = words(r, 'We need', 'D', { left: '150px', top: '380px', fontSize: '150px' });
+  const l3 = words(r, 'new tools', 'D red', { left: '150px', top: '510px', fontSize: '150px' });
+  const l4 = words(r, 'to be more agile.', 'D', { left: '150px', top: '640px', fontSize: '110px', color: 'var(--sky)' });
+  const tN = W(HK[2], 'new'), tA = W(HK[2], 'agile');
+  sfx(a - .25, 'whoosh', .55); sfx(tN - .3, 'accent', .55); sfx(tN + .05, 'shimmer', .4, 7); sfx(tA - .1, 'tap', .35, 5);
+  return (t) => {
+    const lt = t - a;
+    // the supplied hook's own footage: Intel's "supply chain storm" slide, pushing in on the ship
+    pl.set({ url: hookUrl(clamp(5.2 + lt, 5.2, 9.2)), crop: [88, 330, 1100, 619], w: 1920, h: 1080, zoom: 1.0 + lt * .03, px: .25, py: .2, op: 1, radius: 0, br: .95 });
+    S(lab, { opacity: P(lt, .1, .4) });
+    reveal(l1, t, a, .04); reveal(l2, t, W(HK[2], 'we') - .1, .07); reveal(l3, t, tN - .1, .07); reveal(l4, t, W(HK[2], 'more') - .2, .06);
+    const out = P(t, 9.75, 10.2, E.inExpo);
+    [lab, l1, l2, l3, l4].forEach(e => { e.style.opacity = 1 - out; });
   };
 });
 
@@ -326,21 +323,8 @@ FIN.forEach((f, i) => {
 // ======================================================================
 // 01 INTEL — MARKET INTELLIGENCE
 // ======================================================================
-shot(19.5, C[2].a, (r, a) => {
-  const pl = plate(r);
-  const lab = div(r, 'lbl abs', { left: '154px', top: '250px' }, 'Intel · Finalist 01');
-  const l1 = words(r, "I've never seen", 'D', { left: '150px', top: '300px', fontSize: '150px' });
-  const l2 = words(r, 'conditions like this.', 'D', { left: '150px', top: '440px', fontSize: '150px' });
-  sfx(W(1, 'conditions'), 'pulse', .45);
-  return (t) => {
-    const lt = t - a;
-    pl.set({ src: 1.0, crop: [0, 68, 1672, 944], x: 1540, y: 745, w: 580, h: 327, zoom: 1 + lt * .03, ry: -16, op: P(lt, .2, .7) * .8, br: .7 });
-    S(lab, { opacity: P(lt, .1, .4) });
-    reveal(l1, t, C[1].a - .1, .07); reveal(l2, t, W(1, 'conditions') - .1, .07);
-  };
-});
-shot(C[2].a, C[4].a, (r, a) => {
-  const lab = div(r, 'lbl abs', { left: '154px', top: '200px' }, 'The operating environment');
+shot(CARD_T[0] + 2, C[4].a, (r, a) => {
+  const lab = div(r, 'lbl abs', { left: '154px', top: '200px' }, 'Intel · Finalist 01 · The operating environment');
   const a1 = words(r, 'Supply chains', 'D', { left: '150px', top: '250px', fontSize: '170px' });
   const a2 = words(r, 'are being used', 'D', { left: '150px', top: '400px', fontSize: '170px', color: 'rgba(245,247,251,.6)' });
   const a3 = words(r, 'as a weapon', 'D', { left: '150px', top: '550px', fontSize: '170px' });
@@ -354,14 +338,14 @@ shot(C[2].a, C[4].a, (r, a) => {
     S(bar, { transform: `scaleX(${P(t, tW, tW + .5, E.inOutExpo)})` });
   };
 });
-shot(C[4].a, C[6].a, (r, a) => {
+shot(C[4].a, C[5].a - .05, (r, a) => {
   const pl = plate(r);
   const lab = div(r, 'lbl abs', { left: '120px', top: '250px' }, 'Intel · Finalist 01');
   const h = words(r, 'Platform MI', 'D', { left: '114px', top: '310px', fontSize: '124px' });
   const tags = ['Agentic AI', 'Live market signals', 'Part-level intelligence'].map((s, i) => div(r, 'U abs', {
     left: '124px', top: (480 + i * 70) + 'px', fontSize: '34px', fontWeight: 600, whiteSpace: 'nowrap' },
     `<span style="display:inline-block;width:14px;height:14px;background:var(--red);margin-right:18px;vertical-align:middle"></span>${s}`));
-  const tp = [W(4, 'with'), W(4, 'platform'), W(4, 'place')];
+  const tp = [W(4, 'platform'), W(4, 'place'), W(4, 'move')];
   tp.forEach((x, i) => sfx(x, 'tap', .35, i * 2));
   return (t) => {
     const lt = t - a;
@@ -369,6 +353,21 @@ shot(C[4].a, C[6].a, (r, a) => {
     pl.set({ src: 12.2, crop: [0, 68, 1672, 944], x: 1310 + (1 - e) * 400, y: 470, w: 1060, h: 598, zoom: 1 + lt * .02, ry: -14, op: e });
     S(lab, { opacity: P(lt, .1, .4) }); reveal(h, lt, .15, .08);
     tags.forEach((g, i) => { const p = P(t, tp[i], tp[i] + .5); S(g, { opacity: p, transform: `translateX(${(1 - p) * -30}px)` }); });
+  };
+});
+shot(C[5].a - .05, C[6].a, (r, a) => {
+  const pl = plate(r);
+  const f1 = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '230px', fontSize: '250px' }, 'Firefighting');
+  const strike = div(r, 'abs', { left: '330px', top: '330px', width: '1260px', height: '14px', background: 'var(--red)', transformOrigin: '0 50%' });
+  const f2 = words(r, '→ Foresight', 'D', { left: '0', width: '1920px', textAlign: 'center', top: '480px', fontSize: '290px' });
+  f2.ws[1].classList.add('red');
+  const tTo = W(5, 'to'), tF = W(5, 'foresight');
+  sfx(tTo - .05, 'swipe', .7); sfx(tF - .02, 'accent', .65); sfx(tF + .05, 'shimmer', .45, 0); hit(tF, .3);
+  return (t) => {
+    pl.set({ src: 13, crop: [0, 68, 1672, 944], w: 1920, h: 1080, zoom: 1.2, op: .5, blur: 10, br: .3, radius: 0 });
+    S(f1, { opacity: lerp(1, .35, P(t, tTo, tTo + .3)), transform: `scale(${lerp(1.08, 1, P(t, a, a + .5))})` });
+    S(strike, { transform: `scaleX(${P(t, tTo, tTo + .35, E.inOutExpo)})` });
+    reveal(f2, t, tF - .1, .06, .6);
   };
 });
 shot(C[6].a, CARD_T[1], (r, a) => {
@@ -754,7 +753,7 @@ shot(C[29].a, C[30].a, (r, a) => {
     S(lbl, { opacity: P(t, tZ + .3, tZ + .7), transform: `translateY(${(1 - P(t, tZ + .3, tZ + .8)) * 24}px)` });
   };
 });
-shot(C[30].a, 110, (r, a) => {
+shot(C[30].a, 111, (r, a) => {
   const pl = plate(r);
   const n = odometer(r, '−46%', { left: '150px', top: '190px', fontSize: '300px' }, { red: ['%'], cycles: 1 });
   const nl = div(r, 'lbl abs', { left: '160px', top: '470px', fontSize: '30px', color: 'var(--white)' }, 'Smaller fleet');
@@ -795,8 +794,8 @@ shot(C[30].a, 110, (r, a) => {
 // ======================================================================
 // END: 5 finalists, 1 winner → EDGE Nashville → logo lockup
 // ======================================================================
-WIPES.push(110);
-shot(110, 113.6, (r, a) => {
+WIPES.push(111);
+shot(111, 114.3, (r, a) => {
   const bgp = plate(r);
   const shade = div(r, 'abs', { inset: '0', background: 'rgba(5,13,29,.55)' });
   const TW = 300, TH = 170, GAP = 40, X0 = 960 - (5 * TW + 4 * GAP) / 2;
@@ -807,8 +806,8 @@ shot(110, 113.6, (r, a) => {
     return c;
   });
   const h1 = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '520px', fontSize: '230px', textShadow: '0 10px 60px rgba(0,0,0,.6)' });
-  sfx(110, 'card', .7, 0); FIN.forEach((f, i) => sfx(110.1 + i * .09, 'tap', .35, [0, 3, 5, 7, 10][i]));
-  sfx(111.15, 'pulse', .45); sfx(112.1, 'boom', .9); hit(112.1, 1.0);
+  sfx(a, 'card', .7, 0); FIN.forEach((f, i) => sfx(a + .1 + i * .09, 'tap', .35, [0, 3, 5, 7, 10][i]));
+  sfx(a + 1.15, 'pulse', .45); sfx(a + 2.1, 'boom', .9); hit(a + 2.1, 1.0);
   return (t) => {
     const lt = t - a;
     bgp.set({ url: clipUrl('A', 3.2 + lt * .95), crop: [0, 0, 1920, 1080], w: 1920, h: 1080, zoom: 1.08 - lt * .01, op: 1, radius: 0 });
@@ -822,7 +821,7 @@ shot(110, 113.6, (r, a) => {
     S(h1, { opacity: P(lt, 1.15, 1.3), transform: `scale(${one ? lerp(1.25, 1, P(lt, 2.1, 2.5)) : lerp(1.15, 1, P(lt, 1.15, 1.5))})` });
   };
 });
-shot(113.6, 117.2, (r, a) => {
+shot(114.3, 117.5, (r, a) => {
   const bgp = plate(r);
   const shade = div(r, 'abs', { inset: '0', background: 'radial-gradient(ellipse at 50% 50%, rgba(5,13,29,.78) 0%, rgba(5,13,29,.6) 60%, rgba(5,13,29,.8) 100%)' });
   const pre = words(r, 'See them live at', 'lbl', { left: '0', width: '1920px', textAlign: 'center', top: '180px', fontSize: '30px', color: 'var(--white)' });
@@ -843,7 +842,7 @@ shot(113.6, 117.2, (r, a) => {
     S(venue, { opacity: P(lt, 1.9, 2.3) });
   };
 });
-shot(117.2, 120.01, (r, a) => {
+shot(117.5, 120.01, (r, a) => {
   const panel = div(r, 'abs', { inset: '0', background: '#f6f7fa' });
   const ti = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '250px', fontSize: '110px', color: '#0b2a5c' }, 'Supply Chain Innovation Award<sup style="font-size:.3em;vertical-align:top">™</sup>');
   const by = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '375px', color: '#5a6b86' }, 'by CSCMP &amp; SupplyChainBrain');
@@ -904,7 +903,7 @@ function drawGrain(t) { const f = Math.floor(t * FPS); const pat = grain.createP
 const capline = $('capline');
 function drawCaps(t) {
   const c = CUES.find(c => c && t >= c.a - .05 && t < c.b + .2);
-  const end = t >= 117.2;
+  const end = t >= 117.5;
   if (!c || end) { capline.innerHTML = ''; $('capsband').style.opacity = end ? 0 : .6; return; }
   $('capsband').style.opacity = 1;
   capline.innerHTML = c.words.map(w => `<span style="color:${t >= w.t ? 'rgba(245,247,251,1)' : 'rgba(245,247,251,.4)'}">${w.w}</span>`).join(' ');

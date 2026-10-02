@@ -5,19 +5,12 @@
  "clips": [
   {
    "id": "hook",
+   "file": "hook",
    "src": [
-    16.05,
-    17.99
+    0.0,
+    9.45
    ],
-   "dst": 0.6
-  },
-  {
-   "id": "c1",
-   "src": [
-    2.37,
-    4.92
-   ],
-   "dst": 19.5
+   "dst": 0.0
   },
   {
    "id": "c2",
@@ -25,23 +18,15 @@
     5.1,
     10.55
    ],
-   "dst": 22.05
+   "dst": 19.5
   },
   {
-   "id": "c3a",
+   "id": "c3",
    "src": [
     10.95,
-    14.18
-   ],
-   "dst": 27.5
-  },
-  {
-   "id": "c3b",
-   "src": [
-    17.99,
     22.3
    ],
-   "dst": 30.73
+   "dst": 24.95
   },
   {
    "id": "c5",
@@ -49,7 +34,7 @@
     26.75,
     43.35
    ],
-   "dst": 37.5
+   "dst": 38.5
   },
   {
    "id": "c6",
@@ -57,7 +42,7 @@
     43.55,
     51.5
    ],
-   "dst": 56.5
+   "dst": 57.5
   },
   {
    "id": "c7",
@@ -65,7 +50,7 @@
     56.42,
     64.1
    ],
-   "dst": 64.45
+   "dst": 65.45
   },
   {
    "id": "c8",
@@ -73,7 +58,7 @@
     64.15,
     82.075
    ],
-   "dst": 74.5
+   "dst": 75.5
   },
   {
    "id": "c9",
@@ -81,7 +66,7 @@
     82.075,
     88.07
    ],
-   "dst": 94.5
+   "dst": 95.5
   },
   {
    "id": "c10",
@@ -89,7 +74,7 @@
     92.65,
     101.8
    ],
-   "dst": 100.495
+   "dst": 101.495
   }
  ],
  "cues": [
@@ -115,8 +100,8 @@
   ],
   [
    10.986,
-   14.18,
-   "So now with Platform MI in place,"
+   16.058,
+   "So now with Platform MI in place, we're able to move"
   ],
   [
    16.067,
@@ -249,9 +234,22 @@
    "We have had a smaller fleet, and we have a system that essentially pays for itself."
   ],
   [
-   14.3,
-   16.058,
-   "we're able to move"
+   0.0,
+   2.356,
+   "I've been in supply chain now over twenty years.",
+   "hook"
+  ],
+  [
+   2.407,
+   4.873,
+   "I've never seen conditions like this.",
+   "hook"
+  ],
+  [
+   4.985,
+   9.367,
+   "To navigate today's challenges, we need new tools that can make us more agile.",
+   "hook"
   ]
  ]
 }

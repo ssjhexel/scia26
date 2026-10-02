@@ -34,6 +34,14 @@ if (mode === 'sfx') {
   const s = await page.evaluate(() => window.getSfx());
   fs.writeFileSync(path.join(ROOT, 'build/sfx.json'), JSON.stringify(s, null, 1));
   console.log('sfx cues', s.length);
+} else if (mode === 'range') {
+  // re-render a frame range [a, b) to build/range.mp4 (for patching a section of the master)
+  const page = await openPage(browser);
+  const [a, b] = args.map(Number);
+  const ff = spawn('ffmpeg', ['-v', 'error', '-y', '-f', 'image2pipe', '-framerate', String(TL.fps), '-i', '-',
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', '12', '-pix_fmt', 'yuv420p', path.join(ROOT, 'build/range.mp4')], { stdio: ['pipe', 'inherit', 'inherit'] });
+  for (let f = a; f < b; f++) { const buf = await shoot(page, f / TL.fps); if (!ff.stdin.write(buf)) await new Promise(r => ff.stdin.once('drain', r)); }
+  ff.stdin.end(); await new Promise(r => ff.on('close', r));
 } else if (mode === 'frame') {
   const page = await openPage(browser);
   fs.writeFileSync(path.join(ROOT, 'build/frame.png'), await shoot(page, +args[0]));
