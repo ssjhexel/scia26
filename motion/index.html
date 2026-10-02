@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="node_modules/@fontsource/barlow-condensed/700.css">
+<link rel="stylesheet" href="node_modules/@fontsource/barlow-condensed/800.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/400.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/500.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/600.css">
+<link rel="stylesheet" href="node_modules/@fontsource/inter/700.css">
+<style>
+  :root {
+    --bg: #050d1d;
+    --navy: #0b1d3d;
+    --blue: #2a63c9;
+    --sky: #8fb6ff;
+    --red: #e3243b;
+    --white: #f5f7fb;
+    --dim: rgba(245, 247, 251, .42);
+  }
+  html, body { margin: 0; background: #000; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+  #bg, #grainc { position: absolute; inset: 0; }
+  #world { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  .shot { position: absolute; inset: 0; display: none; transform-origin: 50% 50%; }
+  .abs { position: absolute; }
+  .plate { position: absolute; overflow: hidden; border-radius: 18px; background: #0a1730;
+           box-shadow: 0 40px 90px rgba(0,0,0,.55); }
+  .plate img { position: absolute; max-width: none; }
+  .D { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; text-transform: uppercase;
+       line-height: .86; letter-spacing: -.005em; color: var(--white); white-space: nowrap;
+       font-variant-numeric: tabular-nums; }
+  .U { font-family: 'Inter', sans-serif; color: var(--white); }
+  .lbl { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 22px; letter-spacing: .32em;
+         text-transform: uppercase; color: var(--sky); white-space: nowrap; }
+  .w { display: inline-block; overflow: hidden; vertical-align: top; padding: .06em .03em .08em; margin: -.06em -.03em -.08em; }
+  .wi { display: inline-block; will-change: transform; }
+  .red { color: var(--red); }
+  .out { color: transparent; -webkit-text-stroke: 2px rgba(245,247,251,.55); }
+  #caps { position: absolute; left: 0; right: 0; bottom: 64px; text-align: center; }
+  #capsband { position: absolute; left: 0; right: 0; bottom: 0; height: 260px;
+              background: linear-gradient(to top, rgba(3,8,20,.85), rgba(3,8,20,0)); }
+  #capline { display: inline-block; max-width: 1500px; font-family: 'Inter', sans-serif; font-weight: 600;
+             font-size: 40px; line-height: 1.28; color: var(--white); text-shadow: 0 2px 14px rgba(0,0,0,.6); }
+  #capline span { transition: none; }
+  #vig { position: absolute; inset: 0; pointer-events: none;
+         background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%); }
+  #wipe { position: absolute; top: -10%; height: 120%; width: 70%; left: 0; display: none;
+          background: linear-gradient(90deg, var(--blue) 0 72%, var(--red) 72% 100%); transform-origin: 0 0; }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+  svg { position: absolute; overflow: visible; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="bg" width="1920" height="1080"></canvas>
+  <div id="world"></div>
+  <div id="capsband"></div>
+  <div id="caps"><div id="capline"></div></div>
+  <div id="vig"></div>
+  <canvas id="grainc" width="1920" height="1080" style="opacity:.07;mix-blend-mode:overlay"></canvas>
+  <div id="wipe"></div>
+  <div id="flash"></div>
+</div>
+<script src="film.js"></script>
+</body>
+</html>

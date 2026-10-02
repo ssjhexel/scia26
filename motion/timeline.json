@@ -1,0 +1,236 @@
+{
+ "fps": 30,
+ "duration": 120,
+ "srcFps": 16,
+ "clips": [
+  {
+   "id": "c1",
+   "src": [
+    0.0,
+    4.9
+   ],
+   "dst": 0.0
+  },
+  {
+   "id": "c2",
+   "src": [
+    5.1,
+    10.55
+   ],
+   "dst": 4.9
+  },
+  {
+   "id": "c3",
+   "src": [
+    10.95,
+    26.6
+   ],
+   "dst": 19.5
+  },
+  {
+   "id": "c5",
+   "src": [
+    26.75,
+    43.35
+   ],
+   "dst": 37.5
+  },
+  {
+   "id": "c6",
+   "src": [
+    43.55,
+    51.5
+   ],
+   "dst": 56.5
+  },
+  {
+   "id": "c7",
+   "src": [
+    56.42,
+    64.1
+   ],
+   "dst": 64.45
+  },
+  {
+   "id": "c8",
+   "src": [
+    64.15,
+    82.075
+   ],
+   "dst": 74.5
+  },
+  {
+   "id": "c9",
+   "src": [
+    82.075,
+    88.07
+   ],
+   "dst": 94.5
+  },
+  {
+   "id": "c10",
+   "src": [
+    92.65,
+    101.8
+   ],
+   "dst": 100.495
+  }
+ ],
+ "cues": [
+  [
+   0.0,
+   2.356,
+   "I've been in supply chain now over twenty years."
+  ],
+  [
+   2.407,
+   4.873,
+   "I've never seen conditions like this."
+  ],
+  [
+   5.173,
+   8.7,
+   "Supply chains are literally being used as a weapon at both the state"
+  ],
+  [
+   8.7,
+   10.486,
+   "level and at the corporate level now."
+  ],
+  [
+   10.986,
+   16.058,
+   "So now with Platform MI in place, we're able to move"
+  ],
+  [
+   16.067,
+   17.995,
+   "from firefighting to foresight."
+  ],
+  [
+   18.02,
+   22.193,
+   "Currently we have 5,000 active part numbers that are being protected"
+  ],
+  [
+   22.493,
+   26.523,
+   "and really closer to 2 billion in revenue that's being shielded."
+  ],
+  [
+   26.823,
+   29.605,
+   "Imagine you're sitting there and you say, \"Okay, we're 500,000 now,"
+  ],
+  [
+   29.905,
+   32.806,
+   "but wait a minute, next year in peak I'm gonna have 3 million."
+  ],
+  [
+   32.847,
+   33.82,
+   "What am I gonna do?"
+  ],
+  [
+   33.857,
+   35.378,
+   "Are my systems ready for that?\""
+  ],
+  [
+   35.678,
+   38.588,
+   "We're actually now at about three million packages a day."
+  ],
+  [
+   38.888,
+   41.881,
+   "All of that we built from zero in three years, and I don't think it"
+  ],
+  [
+   41.883,
+   43.261,
+   "would be possible without Atlas."
+  ],
+  [
+   43.636,
+   47.558,
+   "We are the last line of defense for Intel's manufacturing flow."
+  ],
+  [
+   47.858,
+   51.389,
+   "It can have a million dollars per site per day revenue impact."
+  ],
+  [
+   56.491,
+   62.292,
+   "An 88% reduction in our high-risk IPNs, moving from worst in class up \u2014"
+  ],
+  [
+   62.292,
+   63.949,
+   "now we're best in class across the company."
+  ],
+  [
+   64.249,
+   64.906,
+   "Attention."
+  ],
+  [
+   65.206,
+   69.182,
+   "Would Stevens Transport truck 2-5-7-8-0-8"
+  ],
+  [
+   69.563,
+   71.443,
+   "please proceed to dock five."
+  ],
+  [
+   71.742,
+   74.792,
+   "We cut driver check-in time five minutes down to two minutes."
+  ],
+  [
+   75.082,
+   77.625,
+   "That's a 66% reduction in check-in time."
+  ],
+  [
+   77.625,
+   80.29,
+   "They never had to get out of their truck once."
+  ],
+  [
+   80.305,
+   82.075,
+   "We are becoming a shipper of choice."
+  ],
+  [
+   82.075,
+   84.905,
+   "Unfortunately, we have a death every three minutes."
+  ],
+  [
+   85.02,
+   86.457,
+   "Safety is not a cost."
+  ],
+  [
+   86.551,
+   88.069,
+   "It can drive efficiency."
+  ],
+  [
+   92.677,
+   95.751,
+   "The proof is that we've had zero fatalities."
+  ],
+  [
+   95.787,
+   101.723,
+   "We have had a smaller fleet, and we have a system that essentially pays for itself."
+  ]
+ ]
+}
