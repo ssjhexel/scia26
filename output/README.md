@@ -10,7 +10,7 @@
 | `SUNO_MUSIC_PROMPT.md` | Style + structure prompt, 120 BPM, with a hit map |
 
 All stems start at 0:00 and are exactly 2:00. Drop them in at the head of the timeline.
-The audio is normalized to **-16 LUFS** so there's headroom for music + VO. Master the final mix to **-14 LUFS** (true peak -1 dB).
+The dialogue+SFX audio sits at about **-21 LUFS** integrated (peaks at -1.5 dBFS), which leaves room for music + VO. Master the final mix to **-14 LUFS** (true peak -1 dB).
 
 ## Structure
 | Time | Section |
