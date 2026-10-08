@@ -20,7 +20,7 @@ def bundle(page, out):
     extra = {'glass': data('assets/img/glass-1200.webp'), 'mark': data('assets/img/eig-mark.webp')}
     def js(m):
         txt = (root / m.group(1)).read_text()
-        return '<script>' + txt + '</script>'
+        return '<script>' + txt.replace('</script', '<\\/script') + '</script>'
     html = re.sub(r'<script src="((?:js|data)/[^"]+|config\.js)"></script>', js, html)
     inline = dict(spk, __glass=extra['glass'], __mark=extra['mark'])
     html = html.replace('<body>', '<body><script>window.EIGOD_INLINE=' + json.dumps(inline) + ';</script>', 1)

@@ -33,7 +33,9 @@
     if (hlsLoading) return hlsLoading;
     hlsLoading = new Promise(function (res, rej) {
       var s = document.createElement('script');
-      s.src = base + 'js/vendor/hls.light.min.js';
+      var inline = document.getElementById('eigod-hls-src');  // single-file builds embed hls.js, unparsed
+      if (inline) { s.text = inline.textContent; document.head.appendChild(s); return res(window.Hls); }
+      s.src = cfg.hlsUrl || base + 'js/vendor/hls.light.min.js';
       s.onload = function () { res(window.Hls); };
       s.onerror = rej;
       document.head.appendChild(s);

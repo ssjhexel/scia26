@@ -37,7 +37,7 @@ window.EIGOD_CONFIG = {
   conferenceUrl: 'https://consultingeig.com/austinsummit2026/'
 };
 
-// WordPress (or any host) can override any of the above without editing this file:
-//   <script>window.EIGOD_OVERRIDES = { assetBase: '/wp-content/uploads/eig-ondemand/', ... }</script>
-// placed before config.js. The generated embeds in wordpress/ do exactly that.
+// WordPress (or any host) can override any of the above without editing this file: define
+// window.EIGOD_OVERRIDES = { assetBase: '/wp-content/uploads/eig-ondemand/', ... } in a script that runs
+// before this one. The WordPress page templates in wordpress/templates/ do exactly that.
 if (window.EIGOD_OVERRIDES) Object.assign(window.EIGOD_CONFIG, window.EIGOD_OVERRIDES);

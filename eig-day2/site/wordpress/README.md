@@ -1,31 +1,29 @@
 # Deploying Day 2 On-Demand on consultingeig.com (WordPress on KnownHost)
 
-The site is plain HTML/CSS/JS with no build step and no plugins required. Videos are self-hosted on the same server as HLS adaptive streams.
+Two standalone page templates, with no plugins and no page builder. Videos are self-hosted on the same server as HLS adaptive streams.
 
-## 1. Upload the files
+## 1. Install the two page templates
 
-Upload the contents of `site/`, except `_dev/`, `_screens/` and `wordpress/`, to:
+`templates/` holds two **standalone page templates**:
 
-```
-/wp-content/uploads/eig-ondemand/
-  config.js   data/   css/   js/   assets/
-  videos/            ← the encoded talks go here (step 4)
-```
+| File | Template name | Suggested page |
+|---|---|---|
+| `eig-day2-on-demand.php` | EIG Day 2 On-Demand Sales | `/day-2-on-demand/` |
+| `eig-day2-on-demand-watch.php` | EIG Day 2 On-Demand Watch | `/day-2-on-demand/watch/` (a child page of the sales page) |
 
-Use cPanel File Manager, SFTP, or a plugin like WP File Manager. Uploading through the Media Library won't keep the folder structure.
+1. **Upload both files** to your active theme's folder, `wp-content/themes/<your-theme>/`, using cPanel File Manager or SFTP. If your theme gets updates, use a child theme so the files aren't wiped.
+2. **Create each page:** go to *Pages → Add New*, add a title, choose the template under *Page Attributes → Template*, and publish. Leave the content empty; the template doesn't use the editor.
+3. **That's it.** Each template prints its own complete page, so your theme's header, footer and stylesheet never load and can't interfere. Fonts, images and scripts are all inside the file. The two pages find each other's addresses automatically.
 
-## 2. Create the two pages
+**Settings** sit at the top of each file: video folder, gating on/off, and price, currency and Stripe link (sales template only). Keep `gated` the same in both files.
 
-| Page | Suggested URL | Template | Content |
-|---|---|---|---|
-| Sales page | `/day-2-on-demand/` | Full width or "blank / canvas" (no sidebar, no title) | Custom HTML block containing `sales-embed.html` |
-| Watch library | `/day-2-on-demand/watch/` | Same | Custom HTML block containing `watch-embed.html` |
+- **Analytics or pixel plugins:** these need WordPress's hooks. Set `$eigod_wp_hooks = true` and the page runs `wp_head()`/`wp_footer()`. That also loads your theme's CSS; the page is built to withstand it, but off is cleanest.
+- **SEO:** set the watch page to *noindex* (it already sends a noindex tag).
+- **Changing copy, speakers or sessions:** edit `site/` and rebuild with `python3 tools/make-wp-templates.py`, then re-upload.
 
-- **Content:** paste the whole file into a single **Custom HTML** block. In Elementor, use an HTML widget in a full-width section.
-- **Different URLs or folder?** Regenerate the embeds:
-  `python3 tools/make-embeds.py /wp-content/uploads/eig-ondemand/ /day-2-on-demand/ /day-2-on-demand/watch/`
-- **Indexing:** set the watch page to *noindex* in your SEO plugin.
-- **Theme safety:** everything is scoped under `.eigod`, so the page won't change your theme and the theme won't change the page. We tested it against an aggressively styled mock theme.
+## 2. Upload the videos
+
+Upload the encoded talks to `wp-content/uploads/eig-ondemand/videos/`. The layout is in step 4. Optionally, add a 1200×630 sharing image at `wp-content/uploads/eig-ondemand/og-image.jpg`.
 
 ## 3. Connect Stripe
 

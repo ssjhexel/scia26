@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../site/css/fonts.css">
+<style>
+  :root {
+    --bg: #050a15; --bg2: #0a1426;
+    --copper: #c98552; --copper-hi: #e8b38a; --copper-lo: #8a4f2b;
+    --ink: #f4efe8; --dim: rgba(244, 239, 232, .64); --faint: rgba(244, 239, 232, .38);
+    --grad: linear-gradient(100deg, #9a5a32 0%, #e8b38a 42%, #c98552 68%, #7a4424 100%);
+    --serif: 'Instrument Serif', Georgia, serif;
+    --sans: 'Inter Tight', system-ui, sans-serif;
+  }
+  html, body { margin: 0; background: transparent; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+  #stage.opaque { background: var(--bg); }
+  .abs { position: absolute; }
+  .full { position: absolute; inset: 0; }
+  .cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .kick { font: 600 22px/1 var(--sans); letter-spacing: .3em; text-transform: uppercase; color: var(--copper-hi); white-space: nowrap; }
+  .serif { font-family: var(--serif); font-weight: 400; color: var(--ink); letter-spacing: -.012em; }
+  .sans { font-family: var(--sans); color: var(--ink); }
+  .w { display: inline-block; overflow: hidden; vertical-align: top; padding: .08em .04em .14em; margin: -.08em -.04em -.14em; }
+  .wi { display: inline-block; will-change: transform; }
+  .rule { height: 2px; background: var(--grad); transform-origin: 0 50%; }
+  .av { border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px rgba(232, 179, 138, .55), 0 10px 30px rgba(0, 0, 0, .45); background: #1a2233; }
+  .av img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(.92) contrast(1.03); }
+  .chip { display: inline-block; font: 600 15px/1 var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--copper-hi);
+          border: 1px solid rgba(232, 179, 138, .45); border-radius: 99px; padding: 7px 11px 6px; vertical-align: middle; margin-left: 12px; }
+  .plate { position: absolute; border-radius: 16px; overflow: hidden;
+           background: linear-gradient(100deg, rgba(6, 12, 25, .92) 0%, rgba(8, 15, 30, .86) 70%, rgba(8, 15, 30, .78) 100%);
+           box-shadow: 0 24px 60px rgba(0, 0, 0, .38), inset 0 0 0 1px rgba(232, 179, 138, .16); }
+  .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, #e8b38a, #c98552 60%, #8a4f2b); transform-origin: 50% 100%; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script src="gfx.js"></script>
+</body>
+</html>

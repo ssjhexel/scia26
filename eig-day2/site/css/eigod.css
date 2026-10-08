@@ -47,10 +47,12 @@
   letter-spacing: normal; font-family: inherit; font-size: inherit; font-weight: inherit; line-height: inherit; color: inherit; text-align: inherit; text-shadow: none;
 }
 .eigod :is(b, strong) { font-weight: 600; }
+/* structural elements: keep the type chain flowing from .eigod even if a theme styles bare div/a/nav */
+.eigod :is(div, section, header, footer, nav, main, article, aside, a, button, label, i, time, abbr) { font-family: inherit; line-height: inherit; letter-spacing: inherit; text-transform: none; }
 .eigod :is(ul, ol, li) { list-style: none; }
 .eigod :is(img, picture, video, svg) { display: block; max-width: 100%; border: 0; padding: 0; margin: 0; box-shadow: none; background: none; border-radius: 0; }
 .eigod :is(a) { color: inherit; text-decoration: none; border: 0; box-shadow: none; background: none; text-transform: none; }
-.eigod :is(button, input) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; border-radius: 0; box-shadow: none; text-transform: none; letter-spacing: inherit; cursor: pointer; min-height: 0; line-height: inherit; }
+.eigod :is(button, input) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; border-radius: 0; box-shadow: none; text-transform: none; letter-spacing: inherit; cursor: pointer; min-height: 0; min-width: 0; height: auto; width: auto; line-height: inherit; white-space: normal; text-align: inherit; text-shadow: none; outline-offset: 0; }
 .eigod ::selection { background: rgba(201, 133, 82, .35); color: #fff; }
 .eigod :focus-visible { outline: 2px solid var(--copper-hi); outline-offset: 3px; border-radius: 6px; }
 
