@@ -4,3 +4,5 @@ site/_screens/*.png
 # heavy video work (masters, segments) — delivered outside git
 work/
 site/videos/
+deploy/.key
+deploy/eigod-receive.php

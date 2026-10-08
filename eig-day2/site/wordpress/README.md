@@ -23,7 +23,17 @@ Two standalone page templates, with no plugins and no page builder. Videos are s
 
 ## 2. Upload the videos
 
-Upload the encoded talks to `wp-content/uploads/eig-ondemand/videos/`. The layout is in step 4. Optionally, add a 1200×630 sharing image at `wp-content/uploads/eig-ondemand/og-image.jpg`.
+The encoded talks go in `wp-content/uploads/eig-ondemand/videos/`, one folder per talk; the layout is in step 4. There are two ways to get them there:
+
+- **One-time receiver (recommended):**
+  1. Upload `eigod-receive.php` (supplied separately; it holds a private key) to `wp-content/uploads/eig-ondemand/`.
+  2. The files are pushed over HTTPS with `deploy/push.py`. The receiver only accepts the talk video files, only with its key, and stops working after 48 hours.
+  3. **Delete it when the upload is done.**
+
+  It also writes a small `videos/.htaccess` that sets the correct streaming file types and turns off folder listing.
+- **By hand:** zip each talk folder, upload the zip with cPanel File Manager, and extract it in place.
+
+Optionally, add a 1200×630 sharing image at `wp-content/uploads/eig-ondemand/og-image.jpg`.
 
 ## 3. Connect Stripe
 
