@@ -41,7 +41,7 @@ window.EIG_TALKS = [
       'Optimal Ops gamifies shift performance and puts statistical process control in operators\' hands.'
     ],
     chapters: [{ t: 0, title: 'People, process, data, technology' }, { t: 171.4, title: 'The strategy-execution bicycle' }, { t: 384.4, title: 'Plug-in services and ChainSightAQ' }, { t: 654.4, title: 'Positioning and skepticism' }, { t: 903.4, title: 'How partners work together' }, { t: 1082.4, title: 'EIG\'s joint offerings' }, { t: 1307.4, title: 'Optimal Ops in practice' }],
-    video: { provider: 'hls', src: '09/master.m3u8', poster: '09/poster.jpg' }
+    video: { provider: 'hls', src: '09/master.m3u8', poster: '09/poster.jpg' , captions: '09/captions.vtt' }
   },
   {
     id: '10', slug: 'market-intelligence', block: 'morning', time: '10:15 AM', track: 'Panel',
@@ -56,7 +56,7 @@ window.EIG_TALKS = [
       'Say what you stand for, repeatedly; the clients aligned with you will show up.'
     ],
     chapters: [{ t: 0, title: 'Six forces through 2027' }, { t: 79.4, title: 'What separates the winners' }, { t: 305.4, title: 'Discipline is consistency with purpose' }, { t: 600.4, title: 'Why strategies die slowly' }, { t: 885.4, title: 'Q&A: building robust strategy' }, { t: 1112.4, title: 'Is the world catching on?' }, { t: 1383.4, title: 'Reading the poll results' }],
-    video: { provider: 'hls', src: '10/master.m3u8', poster: '10/poster.jpg' }
+    video: { provider: 'hls', src: '10/master.m3u8', poster: '10/poster.jpg' , captions: '10/captions.vtt' }
   },
   {
     id: '11', slug: 'transparency-revolution', block: 'morning', time: '10:45 AM', track: 'Panel',
@@ -71,7 +71,7 @@ window.EIG_TALKS = [
       'Data latency came up as a critical trust factor in every workshop and discussion.'
     ],
     chapters: [{ t: 0, title: 'Introducing the Trust Acceleration Index' }, { t: 91.4, title: 'Inside the MxD research' }, { t: 467.4, title: 'Measure trust, then improve it' }, { t: 796.4, title: 'Why visibility still lags' }, { t: 888.4, title: 'Finding 25 trust factors' }, { t: 1147.4, title: 'Data latency and performance' }, { t: 1332.4, title: 'Measuring business impact' }, { t: 1461.4, title: 'Audience Q&A' }, { t: 1850.4, title: 'The GE precedent' }],
-    video: { provider: 'hls', src: '11/master.m3u8', poster: '11/poster.jpg' }
+    video: { provider: 'hls', src: '11/master.m3u8', poster: '11/poster.jpg' , captions: '11/captions.vtt' }
   },
   {
     id: '12', slug: 'startup-ai-npi', block: 'lightning', time: '11:30 AM', track: 'Lightning Talk',
@@ -86,7 +86,7 @@ window.EIG_TALKS = [
       'Say upfront you won\'t train models on client process IP; transparency earns data access.'
     ],
     chapters: [{ t: 0, title: 'Scaling new technology' }, { t: 113.4, title: 'Invention got fast' }, { t: 157.4, title: 'Find the slowest step' }, { t: 451.4, title: 'Data, IP and transparency' }],
-    video: { provider: 'hls', src: '12/master.m3u8', poster: '12/poster.jpg' }
+    video: { provider: 'hls', src: '12/master.m3u8', poster: '12/poster.jpg' , captions: '12/captions.vtt' }
   },
   {
     id: '13', slug: 'npi-assessment', block: 'lightning', time: '11:35 AM', track: 'Lightning Talk',
@@ -101,7 +101,7 @@ window.EIG_TALKS = [
       'Companies that want to be more like Apple build an action plan to get there.'
     ],
     chapters: [{ t: 0, title: 'Three-part assessment' }, { t: 72.4, title: 'From survey to consensus' }, { t: 135.4, title: 'Origins and early results' }],
-    video: { provider: 'hls', src: '13/master.m3u8', poster: '13/poster.jpg' }
+    video: { provider: 'hls', src: '13/master.m3u8', poster: '13/poster.jpg' , captions: '13/captions.vtt' }
   },
   {
     id: '14', slug: 'change-management', block: 'lightning', time: '11:40 AM', track: 'Lightning Talk',
@@ -116,7 +116,7 @@ window.EIG_TALKS = [
       'Listen first: people won\'t listen to you until you\'ve proven you\'re listening to them.'
     ],
     chapters: [{ t: 0, title: 'Rethinking change management' }, { t: 78.4, title: 'The weather forecast model' }, { t: 182.4, title: 'A compass, not a roadmap' }, { t: 230.4, title: 'Four levels of change' }],
-    video: { provider: 'hls', src: '14/master.m3u8', poster: '14/poster.jpg' }
+    video: { provider: 'hls', src: '14/master.m3u8', poster: '14/poster.jpg' , captions: '14/captions.vtt' }
   },
   {
     id: '15', slug: 'unified-security', block: 'lightning', time: '11:45 AM', track: 'Lightning Talk',
@@ -131,7 +131,7 @@ window.EIG_TALKS = [
       'Build the program from risk tolerance, priorities, crown jewels and threats.'
     ],
     chapters: [{ t: 0, title: 'Security beyond cyber' }, { t: 45.4, title: 'Context closes the gaps' }, { t: 145.4, title: 'One program, every domain' }, { t: 238.4, title: 'Security as risk management' }],
-    video: { provider: 'hls', src: '15/master.m3u8', poster: '15/poster.jpg' }
+    video: { provider: 'hls', src: '15/master.m3u8', poster: '15/poster.jpg' , captions: '15/captions.vtt' }
   },
   {
     id: '16', slug: 'pi-behavior-teams', block: 'lightning', time: '11:50 AM', track: 'Lightning Talk',
@@ -146,7 +146,7 @@ window.EIG_TALKS = [
       'A delegating new manager can stall an employee who wants to be told what to do.'
     ],
     chapters: [{ t: 0, title: 'Erik Herman and PI' }, { t: 38.4, title: 'Four behavioral drives' }, { t: 196.4, title: 'Building complementary teams' }, { t: 286.4, title: 'When the manager changes' }],
-    video: { provider: 'hls', src: '16/master.m3u8', poster: '16/poster.jpg' }
+    video: { provider: 'hls', src: '16/master.m3u8', poster: '16/poster.jpg' , captions: '16/captions.vtt' }
   },
   {
     id: '17', slug: 'industry-5', block: 'afternoon', time: '12:45 PM', track: 'Panel',
@@ -161,7 +161,7 @@ window.EIG_TALKS = [
       'A partner ecosystem should lead with two or three problems it solves, not fifty.'
     ],
     chapters: [{ t: 0, title: 'AI adoption and data ownership' }, { t: 376.4, title: 'The capability to invest in' }, { t: 485.4, title: 'Debating AI risk' }, { t: 578.0, title: 'Change, safety and workforce fear' }, { t: 994.0, title: 'Mapping EIG synergies' }, { t: 1144.0, title: 'LLMs that free up talent' }, { t: 1367.0, title: 'Resilience and Workforce 5.0' }, { t: 1580.0, title: 'Why EIG can win' }],
-    video: { provider: 'hls', src: '17/master.m3u8', poster: '17/poster.jpg' }
+    video: { provider: 'hls', src: '17/master.m3u8', poster: '17/poster.jpg' , captions: '17/captions.vtt' }
   },
   {
     id: '18', slug: 'collaboration-labs-kickoff', block: 'afternoon', time: '1:30 PM', track: 'Lab',
@@ -176,7 +176,7 @@ window.EIG_TALKS = [
       'Two 45-minute rounds; anyone not named can join any round-one session on the charts.'
     ],
     chapters: [{ t: 0, title: 'How the labs work' }, { t: 72.4, title: 'Round one assignments' }, { t: 184.4, title: 'Remote attendees join' }],
-    video: { provider: 'hls', src: '18/master.m3u8', poster: '18/poster.jpg' }
+    video: { provider: 'hls', src: '18/master.m3u8', poster: '18/poster.jpg' , captions: '18/captions.vtt' }
   },
   {
     id: '19', slug: 'closing-momentum', block: 'afternoon', time: '3:15 PM', track: 'Closing',
@@ -189,6 +189,6 @@ window.EIG_TALKS = [
       'Partners leave with link-ups on specific projects to carry forward.'
     ],
     chapters: [{ t: 0, title: 'Inviting the report-outs' }, { t: 37.7, title: 'Thanks and reflections' }],
-    video: { provider: 'hls', src: '19/master.m3u8', poster: '19/poster.jpg' }
+    video: { provider: 'hls', src: '19/master.m3u8', poster: '19/poster.jpg' , captions: '19/captions.vtt' }
   }
 ];

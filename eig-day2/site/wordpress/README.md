@@ -52,12 +52,13 @@ Each talk lives in its own folder:
 videos/09/master.m3u8        ← adaptive playlist (1080p / 720p / 480p)
 videos/09/1080p/…  720p/…  480p/…
 videos/09/poster.jpg
-videos/09/captions.vtt       ← optional
+videos/09/captions.vtt       ← English captions (cleaned auto-transcript)
+masters/09.mp4               ← plain MP4 copy for your archive; blocked from the web, download it in cPanel
 ```
 
 - **How it plays:** the player streams adaptively. Safari and iOS play HLS natively; other browsers use the bundled `js/vendor/hls.light.min.js`. Talks whose files aren't uploaded yet show a branded "Video arriving soon" frame instead of an error.
-- **Storage:** about 10–12 GB for all 11 talks (3 h 20 m) at three qualities.
-- **Bandwidth:** about 2 GB per viewer-hour at 1080p, less on smaller screens thanks to adaptive streaming. A buyer who watches everything uses roughly 3–7 GB. Check the bandwidth allowance on your KnownHost plan; it's the only cost that grows with sales.
+- **Storage:** about 1.7 GB for all 11 talks (2 h 42 m) at three qualities, plus 0.9 GB of MP4 masters.
+- **Bandwidth:** slides compress well, so 1080p averages 0.5–0.9 Mbps, about 0.4 GB per viewer-hour, and less on phones thanks to adaptive streaming. A buyer who watches everything uses roughly 1 GB. Check the bandwidth allowance on your KnownHost plan; it's the only cost that grows with sales.
 - **Overflow option:** Cloudflare R2's free tier (10 GB storage, no egress fees) can hold the same folder. Point `videoBase` at the R2 URL; nothing else changes.
 
 ## 5. Turn on gating (when you're ready to sell)
@@ -65,8 +66,10 @@ videos/09/captions.vtt       ← optional
 The test build has `gated: false`, so everything is open. To lock it down:
 
 1. **Install the access plugin.** Copy `eigod-access.php.example` to `wp-content/mu-plugins/eigod-access.php` and follow the setup comment at the top. That covers the Stripe secret key in `wp-config.php` and a shared secret file kept above the web root.
-2. **Install the video gate.** In `wp-content/uploads/eig-ondemand/videos/`, add `gate.php` (from `videos-gate.php.example`) and `.htaccess` (from `videos.htaccess.example`).
-3. **Switch it on.** Set `gated: true` in `config.js`.
+2. **Install the video gate.**
+   - Put `eigod-gate.php` (from `videos-gate.php.example`) in your site's top folder, `public_html/`. Your server blocks PHP inside `uploads`, so it can't go next to the videos.
+   - Replace `wp-content/uploads/eig-ondemand/videos/.htaccess` with `videos.htaccess.example`, which sends every video request through that gate.
+3. **Switch it on.** Set `'gated' => true` in the settings at the top of **both** page templates and re-upload them.
 
 **How it works:**
 - **Checkout to library:** Stripe sends the buyer back with a `session_id`. The plugin verifies it server-side with Stripe's API, then sets an HttpOnly signed cookie valid for 12 months.

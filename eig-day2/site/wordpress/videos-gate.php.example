@@ -1,7 +1,8 @@
 <?php
 /**
- * EIG On-Demand video gate (example). Save as  wp-content/uploads/eig-ondemand/videos/gate.php
- * The .htaccess next to it sends every video request here. This script checks the signed
+ * EIG On-Demand video gate (example). Save as  public_html/eigod-gate.php  (your site's top folder:
+ * many hosts, including this one, refuse to run PHP inside wp-content/uploads).
+ * The .htaccess in wp-content/uploads/eig-ondemand/videos/ sends every video request here. This script checks the signed
  * eigod_access cookie (set by eigod-access.php after a verified Stripe payment) and only then
  * streams the requested playlist/segment. It does not load WordPress, so it stays fast.
  *
@@ -23,7 +24,7 @@ if ($expiry < time()) deny();
 
 // 2. Resolve the requested file safely inside this folder
 $rel  = isset($_GET['f']) ? $_GET['f'] : '';
-$base = realpath(__DIR__);
+$base = realpath(__DIR__ . '/wp-content/uploads/eig-ondemand/videos');
 $path = realpath($base . '/' . $rel);
 if (!$path || strpos($path, $base . DIRECTORY_SEPARATOR) !== 0 || !is_file($path)) deny(404);
 
