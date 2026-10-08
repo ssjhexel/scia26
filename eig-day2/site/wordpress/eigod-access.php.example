@@ -1,0 +1,68 @@
+<?php
+/**
+ * Plugin Name: EIG On-Demand Access (example)
+ * Description: Verifies a Stripe Checkout Session and grants access to the Day 2 On-Demand library
+ *              by setting a signed, HttpOnly cookie. Install as wp-content/mu-plugins/eigod-access.php
+ *
+ * EXAMPLE CODE: review it, test it in Stripe test mode, then switch to live keys.
+ *
+ * Setup:
+ *   1. In wp-config.php (never in the page or JS):
+ *        define('EIGOD_STRIPE_SECRET', 'sk_live_...');        // or sk_test_... while testing
+ *        define('EIGOD_PAYMENT_LINK',  'plink_...');          // optional: only accept this Payment Link
+ *   2. Create the secret shared with the video gate. Put it ABOVE the web root, e.g.
+ *        /home/<account>/eigod-secret.php  containing:  <?php return 'a-long-random-string';
+ *      and point EIGOD_SECRET_FILE at it in wp-config.php:
+ *        define('EIGOD_SECRET_FILE', '/home/<account>/eigod-secret.php');
+ *   3. Stripe Payment Link → After payment → "Don't show confirmation page" → redirect to
+ *        https://consultingeig.com/day-2-on-demand/watch/?session_id={CHECKOUT_SESSION_ID}
+ *   4. In site config (EIGOD_OVERRIDES / config.js) set gated: true.
+ */
+
+if (!defined('ABSPATH')) exit;
+
+const EIGOD_COOKIE = 'eigod_access';
+const EIGOD_DAYS   = 365; // keep in step with accessTerm in config.js
+
+function eigod_secret() {
+    static $s = null;
+    if ($s === null) $s = defined('EIGOD_SECRET_FILE') ? (string) include EIGOD_SECRET_FILE : '';
+    return $s;
+}
+
+/** token = base64url(expiry.email_hash) . '.' . hmac */
+function eigod_make_token($email, $expires) {
+    $payload = rtrim(strtr(base64_encode($expires . '.' . substr(hash('sha256', strtolower($email)), 0, 16)), '+/', '-_'), '=');
+    return $payload . '.' . hash_hmac('sha256', $payload, eigod_secret());
+}
+
+add_action('rest_api_init', function () {
+    register_rest_route('eigod/v1', '/verify', array(
+        'methods'             => 'GET',
+        'permission_callback' => '__return_true',
+        'callback'            => function (WP_REST_Request $req) {
+            $sid = sanitize_text_field($req->get_param('session_id'));
+            if (!preg_match('/^cs_(test|live)_[A-Za-z0-9]+$/', $sid) || !defined('EIGOD_STRIPE_SECRET') || !eigod_secret()) {
+                return new WP_REST_Response(array('ok' => false), 400);
+            }
+            $res = wp_remote_get('https://api.stripe.com/v1/checkout/sessions/' . rawurlencode($sid), array(
+                'headers' => array('Authorization' => 'Bearer ' . EIGOD_STRIPE_SECRET),
+                'timeout' => 15,
+            ));
+            if (is_wp_error($res) || wp_remote_retrieve_response_code($res) !== 200) {
+                return new WP_REST_Response(array('ok' => false), 402);
+            }
+            $s = json_decode(wp_remote_retrieve_body($res), true);
+            $paid = isset($s['payment_status']) && $s['payment_status'] === 'paid';
+            $link_ok = !defined('EIGOD_PAYMENT_LINK') || (isset($s['payment_link']) && $s['payment_link'] === EIGOD_PAYMENT_LINK);
+            if (!$paid || !$link_ok) return new WP_REST_Response(array('ok' => false), 402);
+
+            $email   = isset($s['customer_details']['email']) ? $s['customer_details']['email'] : $sid;
+            $expires = time() + EIGOD_DAYS * DAY_IN_SECONDS;
+            $opts    = array('expires' => $expires, 'path' => '/', 'secure' => true, 'samesite' => 'Lax');
+            setcookie(EIGOD_COOKIE, eigod_make_token($email, $expires), $opts + array('httponly' => true));
+            setcookie('eigod_ok', '1', $opts + array('httponly' => false)); // lets the page know to show the library
+            return new WP_REST_Response(array('ok' => true), 200);
+        },
+    ));
+});

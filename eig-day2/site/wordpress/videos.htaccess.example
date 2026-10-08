@@ -1,0 +1,27 @@
+# EIG On-Demand: .htaccess for  wp-content/uploads/eig-ondemand/videos/
+# Rename to .htaccess when you switch the site to gated: true.
+# Works on Apache and LiteSpeed (KnownHost). Every request for a playlist, segment, poster or
+# caption file is routed through gate.php, which checks the signed access cookie first.
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # let gate.php itself run
+  RewriteRule ^gate\.php$ - [L]
+  # everything else goes through the gate
+  RewriteRule ^(.+)$ gate.php?f=$1 [QSA,L]
+</IfModule>
+
+# Correct types if a file is ever served directly
+AddType application/vnd.apple.mpegurl .m3u8
+AddType video/mp2t .ts
+AddType video/iso.segment .m4s
+AddType text/vtt .vtt
+
+# --- TEST MODE (gated: false) ---------------------------------------------------------------
+# While testing, don't install this file at all; the videos folder is then publicly readable.
+# For a lighter interim lock without PHP, you can instead require the cookie's presence only:
+#   RewriteCond %{HTTP_COOKIE} !eigod_access= [NC]
+#   RewriteRule .* - [F,L]
+# (presence-only is easy to fake; use gate.php for real protection)

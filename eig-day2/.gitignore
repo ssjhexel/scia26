@@ -1,0 +1,6 @@
+# local QA artefacts
+site/_dev/videos/
+site/_screens/*.png
+# heavy video work (masters, segments) — delivered outside git
+work/
+site/videos/

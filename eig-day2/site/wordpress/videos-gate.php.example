@@ -1,0 +1,46 @@
+<?php
+/**
+ * EIG On-Demand video gate (example). Save as  wp-content/uploads/eig-ondemand/videos/gate.php
+ * The .htaccess next to it sends every video request here. This script checks the signed
+ * eigod_access cookie (set by eigod-access.php after a verified Stripe payment) and only then
+ * streams the requested playlist/segment. It does not load WordPress, so it stays fast.
+ *
+ * EXAMPLE CODE: review and test before relying on it.
+ */
+$secret = (string) include '/home/<account>/eigod-secret.php'; // same file as EIGOD_SECRET_FILE
+
+function deny($code = 403) { http_response_code($code); header('Cache-Control: no-store'); exit; }
+
+// 1. Verify the cookie: payload.hmac, payload = base64url(expiry.emailhash)
+$tok = isset($_COOKIE['eigod_access']) ? $_COOKIE['eigod_access'] : '';
+$parts = explode('.', $tok);
+if (count($parts) !== 2 || !$secret) deny();
+list($payload, $sig) = $parts;
+if (!hash_equals(hash_hmac('sha256', $payload, $secret), $sig)) deny();
+$decoded = base64_decode(strtr($payload, '-_', '+/'));
+$expiry = (int) strtok($decoded, '.');
+if ($expiry < time()) deny();
+
+// 2. Resolve the requested file safely inside this folder
+$rel  = isset($_GET['f']) ? $_GET['f'] : '';
+$base = realpath(__DIR__);
+$path = realpath($base . '/' . $rel);
+if (!$path || strpos($path, $base . DIRECTORY_SEPARATOR) !== 0 || !is_file($path)) deny(404);
+
+$types = array('m3u8' => 'application/vnd.apple.mpegurl', 'ts' => 'video/mp2t', 'm4s' => 'video/iso.segment',
+               'mp4' => 'video/mp4', 'vtt' => 'text/vtt', 'jpg' => 'image/jpeg', 'webp' => 'image/webp');
+$ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+if (!isset($types[$ext])) deny(404);
+
+header('Content-Type: ' . $types[$ext]);
+header('Cache-Control: private, max-age=' . ($ext === 'm3u8' ? 300 : 604800));
+header('X-Content-Type-Options: nosniff');
+
+// 3. Hand the transfer back to the web server (fast, supports ranges) when available:
+//    LiteSpeed (common on KnownHost): internal redirect.  Apache + mod_xsendfile: X-Sendfile.
+if (isset($_SERVER['SERVER_SOFTWARE']) && stripos($_SERVER['SERVER_SOFTWARE'], 'litespeed') !== false) {
+    header('X-LiteSpeed-Location: ' . str_replace($_SERVER['DOCUMENT_ROOT'], '', $path));
+    exit;
+}
+header('Content-Length: ' . filesize($path));
+readfile($path);

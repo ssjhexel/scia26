@@ -1,0 +1,18 @@
+import { chromium } from '/home/user/scia26/motion/node_modules/playwright-core/index.mjs';
+const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
+const p = await ctx.newPage(); const errs = [];
+p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+await p.goto('http://127.0.0.1:8765/watch.html?devvideos=1', { waitUntil: 'networkidle' });
+await p.waitForSelector('.eo-player.is-ready', { timeout: 15000 });
+const info0 = await p.evaluate(() => ({ hlsLoaded: !!window.Hls, qVisible: !document.querySelector('[data-q-wrap]').hidden, qOpts: [...document.querySelectorAll('[data-q-menu] button')].map(b => b.textContent), ticks: document.querySelectorAll('.eo-p-tick').length }));
+await p.click('[data-big]'); await p.waitForTimeout(3500);
+await p.mouse.move(700, 450); await p.mouse.move(720, 470); await p.waitForTimeout(200);
+const info1 = await p.evaluate(() => { const v = document.querySelector('.eo-player video'); return { t: +v.currentTime.toFixed(2), paused: v.paused, dur: v.duration, w: v.videoWidth, time: document.querySelector('[data-time]').textContent }; });
+await p.screenshot({ path: '/home/user/scia26/eig-day2/site/_screens/watch-playing-1440.png' });
+await p.keyboard.press('l'); await p.waitForTimeout(300);
+const t2 = await p.evaluate(() => document.querySelector('.eo-player video').currentTime);
+await p.click('[data-now-chapters] [data-t="13"]'); await p.waitForTimeout(500);
+const t3 = await p.evaluate(() => ({ t: document.querySelector('.eo-player video').currentTime, on: document.querySelector('[data-now-chapters] .is-on')?.textContent }));
+console.log(JSON.stringify({ info0, info1, afterL: t2, chapter: t3, errs }, null, 1));
+await b.close();
