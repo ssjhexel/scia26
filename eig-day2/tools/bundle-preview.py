@@ -23,7 +23,8 @@ def bundle(page, out):
         return '<script>' + txt.replace('</script', '<\\/script') + '</script>'
     html = re.sub(r'<script src="((?:js|data)/[^"]+|config\.js)"></script>', js, html)
     inline = dict(spk, __glass=extra['glass'], __mark=extra['mark'])
-    html = html.replace('<body>', '<body><script>window.EIGOD_INLINE=' + json.dumps(inline) + ';</script>', 1)
+    live = {'trailerBase': 'https://consultingeig.com/wp-content/uploads/eig-ondemand/trailer/'}  # previews stream the trailer from the live site
+    html = html.replace('<body>', '<body><script>window.EIGOD_OVERRIDES=' + json.dumps(live) + ';window.EIGOD_INLINE=' + json.dumps(inline) + ';</script>', 1)
     (root / '_screens' / out).write_text(html)
     print(out, round(len(html) / 1e6, 2), 'MB')
 bundle('index.html', 'preview-sales.html')

@@ -43,14 +43,18 @@ def push(item):
 vids = ROOT / 'site' / 'videos'
 ready = sorted(d.name for d in vids.iterdir() if (d / 'master.m3u8').exists()) if vids.exists() else []
 ids = [i for i in (IDS or ready) if i in ready]
+trailer = ROOT / 'site' / 'trailer'
+push_trailer = trailer.exists() and (not IDS or 'trailer' in IDS)
 items = []
 for i in ids:
     items += [(f, 'videos/' + f.relative_to(vids).as_posix()) for f in sorted((vids / i).rglob('*')) if f.is_file()]
     mp4 = ROOT / 'work' / 'out' / i / f'{i}.mp4'
     if mp4.exists(): items.append((mp4, f'masters/{i}.mp4'))
+if push_trailer:
+    items += [(f, 'trailer/' + f.name) for f in sorted(trailer.iterdir()) if f.name in ('trailer-1080.mp4', 'trailer-720.mp4', 'poster.jpg')]
 # segments first, playlists last (a talk only plays once everything it references is there), masters at the end
 items.sort(key=lambda x: (x[1].startswith('masters/'), x[1].endswith('.m3u8'), x[1].endswith('master.m3u8'), x[1]))
-print('pushing talks', ids, len(items), 'files', flush=True)
+print('pushing talks', ids, '+ trailer' if push_trailer else '', len(items), 'files', flush=True)
 sent = 0; fails = []
 with cf.ThreadPoolExecutor(4) as ex:
     for k, (rel, st, n) in enumerate(ex.map(push, items), 1):

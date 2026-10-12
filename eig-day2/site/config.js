@@ -26,8 +26,10 @@ window.EIGOD_CONFIG = {
   // Where the encoded HLS videos live: <videoBase>/<talk id>/master.m3u8
   videoBase: 'videos',
 
-  // Optional trailer (HLS or MP4). null = branded "coming soon" frame.
-  trailer: null,
+  // Trailer (MP4). Files live in trailerBase, outside the videos folder so they stay public when gated.
+  // null = branded "coming soon" frame.
+  trailer: { src: 'trailer-1080.mp4', small: 'trailer-720.mp4', poster: 'poster.jpg' },
+  trailerBase: 'trailer/',
 
   // Pages
   salesUrl: 'index.html',

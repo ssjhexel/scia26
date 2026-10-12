@@ -17,6 +17,13 @@ def data(p):
     p = (ROOT / p).resolve(); m = mimetypes.guess_type(str(p))[0] or 'application/octet-stream'
     return f'data:{m};base64,' + base64.b64encode(p.read_bytes()).decode()
 
+def thumb(p, size=256):
+    from PIL import Image
+    import io
+    im = Image.open(p).convert('RGB').resize((size, size), Image.LANCZOS)
+    buf = io.BytesIO(); im.save(buf, 'WEBP', quality=74, method=6)
+    return 'data:image/webp;base64,' + base64.b64encode(buf.getvalue()).decode()
+
 def safe_js(txt):
     # an inline script ends at the first "</script", even inside a comment or string
     return txt.replace('</script', '<\\/script')
@@ -48,6 +55,8 @@ EXTRA_SALES = """
   'currency'          => 'USD',
   'accessTerm'        => 'Lifetime',
   'stripePaymentLink' => 'https://buy.stripe.com/test_XXXXXXXXXXXX',
+  // The trailer files (trailer-1080.mp4, trailer-720.mp4, poster.jpg). Outside videos/ so they stay public when gated.
+  'trailerBase'       => content_url('/uploads/eig-ondemand/trailer/'),
   // Social sharing image (upload it, or point this at any image in your Media Library).
   'ogImage'           => content_url('/uploads/eig-ondemand/og-image.jpg'),"""
 
@@ -101,7 +110,10 @@ def build(page, out, name, desc, step3, extra):
     body = re.sub(r'src="(assets/[^"]+)"', lambda m: f'src="{data(m.group(1))}"', body)
     body = re.sub(r'href="(assets/[^"]+)"', lambda m: f'href="{data(m.group(1))}"', body)
 
-    inline = {p.stem: data(p.relative_to(ROOT)) for p in sorted((ROOT / 'assets/speakers').glob('*.webp'))}
+    # headshots at display size (the grid shows them at <=240 px); the watch page only needs session speakers
+    on_stage = set(re.findall(r"\{ id: '([a-z0-9-]+)'", (ROOT / 'data/talks.js').read_text()))
+    inline = {p.stem: thumb(p) for p in sorted((ROOT / 'assets/speakers').glob('*.webp'))
+              if page != 'watch.html' or p.stem in on_stage}
     if page == 'watch.html':
         inline.update(__glass=data('assets/img/glass-1200.webp'), __mark=data('assets/img/eig-mark.webp'))
     js = ''.join(f'<script>{safe_js((ROOT / s).read_text())}</script>\n' for s in scripts)

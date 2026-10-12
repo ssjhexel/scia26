@@ -61,8 +61,50 @@
   /* ---------- trailer ---------- */
   var tr = $('[data-trailer]');
   if (tr && cfg.trailer) {
-    $('[data-trailer-label]', tr).textContent = 'Watch the trailer';
-    tr.href = (cfg.watchUrl || 'watch.html') + '?trailer=1';
+    var tb = cfg.trailerBase || 'trailer/';
+    if (!/^(https?:)?\/\//.test(tb) && tb.charAt(0) !== '/') tb = base + tb;
+    var tu = function (f) { return tb.replace(/\/?$/, '/') + f; };
+    var T = cfg.trailer, tPoster = tu(T.poster), tBig = tu(T.src), tSmall = tu(T.small || T.src);
+    var quiet = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || (navigator.connection && navigator.connection.saveData);
+    $('[data-trailer-label]', tr).textContent = 'Watch the trailer · 0:30';
+    tr.href = tBig; tr.setAttribute('aria-label', 'Play the 30-second trailer'); tr.classList.add('has-trailer');
+    var pimg = $('.eo-poster > img', tr); if (pimg) { pimg.removeAttribute('srcset'); pimg.src = tPoster; pimg.classList.add('is-trailer'); }
+    var pv = null;
+    if (!quiet && window.matchMedia && matchMedia('(min-width: 721px)').matches && 'IntersectionObserver' in window) {
+      // silent looping preview while the hero is on screen
+      pv = document.createElement('video');
+      pv.muted = true; pv.defaultMuted = true; pv.loop = true; pv.playsInline = true; pv.preload = 'none';
+      pv.setAttribute('playsinline', ''); pv.setAttribute('muted', ''); pv.setAttribute('aria-hidden', 'true');
+      pv.className = 'eo-frame-preview'; pv.poster = tPoster; pv.src = tSmall;
+      $('.eo-poster', tr).insertBefore(pv, $('.eo-poster-in', tr));
+      pv.addEventListener('playing', function () { tr.classList.add('is-previewing'); });
+      new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting && !document.querySelector('.eo-modal')) { var p = pv.play(); if (p && p.catch) p.catch(function () {}); } else pv.pause(); });
+      }, { threshold: .35 }).observe(tr);
+    }
+    tr.addEventListener('click', function (e) { e.preventDefault(); openTrailer(); });
+  }
+  function openTrailer() {
+    if (pv) pv.pause();
+    var m = document.createElement('div');
+    m.className = 'eo-modal'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Trailer');
+    m.innerHTML = '<div class="eo-modal-in"><video controls playsinline preload="auto"></video>' +
+      '<button class="eo-modal-x" type="button" aria-label="Close trailer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>';
+    root.appendChild(m);
+    var v = $('video', m), x = $('.eo-modal-x', m);
+    v.poster = tPoster; v.src = window.innerWidth < 900 ? tSmall : tBig;
+    var p = v.play(); if (p && p.catch) p.catch(function () {});
+    document.documentElement.style.overflow = 'hidden';
+    function close() {
+      v.pause(); v.removeAttribute('src'); v.load(); m.remove(); document.documentElement.style.overflow = '';
+      document.removeEventListener('keydown', onKey); tr.focus();
+      if (pv) { var q = pv.play(); if (q && q.catch) q.catch(function () {}); }
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    x.addEventListener('click', close);
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    document.addEventListener('keydown', onKey);
+    x.focus();
   }
 
   /* ---------- programme ---------- */
