@@ -7,3 +7,4 @@ site/videos/
 deploy/.key
 deploy/eigod-receive.php
 site/trailer/
+__pycache__/
