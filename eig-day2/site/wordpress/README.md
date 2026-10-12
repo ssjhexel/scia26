@@ -72,9 +72,10 @@ The test build has `gated: false`, so everything is open. To lock it down:
 3. **Switch it on.** Set `'gated' => true` in the settings at the top of **both** page templates and re-upload them.
 
 **How it works:**
-- **Checkout to library:** Stripe sends the buyer back with a `session_id`. The plugin verifies it server-side with Stripe's API, then sets an HttpOnly signed cookie valid for 12 months.
+- **Checkout to library:** Stripe sends the buyer back with a `session_id`. The plugin verifies it server-side with Stripe's API, then sets an HttpOnly signed cookie.
 - **The cookie:** the watch page and every video file check it. A copied video link doesn't work without it.
-- **Per-browser access:** access belongs to the browser that bought. A buyer on a new device can email you for access.
+- **Lifetime access:** browsers cap any cookie at about 400 days, so the plugin renews it silently on every visit.
+- **New device or cleared cookies:** the buyer clicks *Already bought? Restore access* under the buy button and enters the email they paid with. The plugin checks Stripe for a paid pass and emails a one-time sign-in link that's valid for 30 minutes. It always gives the same reply, so nobody can use it to look up who bought. WordPress must be able to send email; an SMTP plugin is recommended.
 
 **If you want accounts instead:** use a membership plugin with Stripe built in (Paid Memberships Pro, MemberPress or WP Simple Pay) to protect the watch page, and set the same cookie on login.
 

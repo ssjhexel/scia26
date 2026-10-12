@@ -21,6 +21,51 @@ window.EIG_SPEAKERS = {
   'assad-mirza':         { name: 'Assad Mirza',         role: 'CEO, Infinity OpEx' }
 };
 
+// Partners in the room and online (EIG Partner Network, austinsummit2026 page), shown after the session speakers.
+Object.assign(window.EIG_SPEAKERS, {
+  'ken-gould': { name: "Ken Gould", role: "CEO, Ken Gould Consulting" },
+  'maria-arraiza-monteux': { name: "María Arraiza-Monteux", role: "Founder, 3P Brava, Inc." },
+  'mark-l-johnson': { name: "Mark L. Johnson", role: "CEO & Co-Founder, SCLM Companies" },
+  'rainer-hoff': { name: "Rainer Hoff", role: "Founder & President, Gateway Group" },
+  'brian-boyette': { name: "Brian Boyette", role: "Founder & CEO, RavenCSI" },
+  'susan-mondano': { name: "Susan Mondano", role: "Owner, Infuse2Lead" },
+  'irene-legiec': { name: "Irene Legiec", role: "Founder, IALS Consulting" },
+  'ron-crabtree': { name: "Ron Crabtree", role: "CEO, MetaOps Inc" },
+  'gary-marx': { name: "Gary Marx", role: "Founder, Bluecap Economic Advisors" },
+  'bob-tillberry': { name: "Bob Tillberry", role: "Sales Manager, Atlantic Handling Systems" },
+  'bob-shoremount': { name: "Bob Shoremount", role: "President, Strandberg Consulting Group" },
+  'dean-sorenson': { name: "Dean Sorenson", role: "Founder, IBP Collaborative" },
+  'gerry-vos': { name: "Gerry Vos", role: "Chairman, Atlanticum Advisors" },
+  'paul-moulins': { name: "Paul Moulins", role: "Managing Director, KW Commercial" },
+  'chris-white': { name: "Chris White", role: "Founder, scmBLOX" },
+  'suresh-veeraraghavan': { name: "Suresh Veeraraghavan", role: "Partner, Accelance" },
+  'sashi-wishart': { name: "Sashi Wishart", role: "Founder, Wishart Consulting Group" },
+  'erik-rodriguez': { name: "Erik Rodriguez", role: 'EIG partner', photo: false },   // title and photo to come
+  'ezra-firewalker': { name: "Ezra Firewalker", role: 'EIG partner', photo: false },   // title and photo to come
+  'arthi': { name: "Arthi", role: 'EIG partner', photo: false },   // title and photo to come
+  'mark-pound': { name: "Mark Pound", role: 'EIG partner', photo: false },   // title and photo to come
+});
+window.EIG_PARTNERS = [
+  'ken-gould',
+  'maria-arraiza-monteux',
+  'mark-l-johnson',
+  'rainer-hoff',
+  'brian-boyette',
+  'susan-mondano',
+  'irene-legiec',
+  'ron-crabtree',
+  'gary-marx',
+  'bob-tillberry',
+  'bob-shoremount',
+  'dean-sorenson',
+  'gerry-vos',
+  'paul-moulins',
+  'chris-white',
+  'suresh-veeraraghavan',
+  'sashi-wishart',
+  'erik-rodriguez', 'ezra-firewalker', 'arthi', 'mark-pound'
+];
+
 window.EIG_BLOCKS = [
   { id: 'morning',   label: 'Morning',   title: 'Vision, markets & trust' },
   { id: 'lightning', label: 'Late morning', title: 'Lightning Innovation' },

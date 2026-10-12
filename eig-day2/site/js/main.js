@@ -22,11 +22,12 @@
 
   /* ---------- config-driven text ---------- */
   var sym = symbols[cfg.currency] || '';
-  var termParts = String(cfg.accessTerm || '12 months').split(' ');
+  var term = String(cfg.accessTerm || 'Lifetime'), lifetime = /^life/i.test(term), termParts = term.split(' ');
   var fills = {
     priceLabel: sym + cfg.price, priceNum: String(cfg.price), currencySymbol: sym, currency: cfg.currency,
-    priceNote: cfg.priceNote, accessTerm: cfg.accessTerm, accessNum: termParts[0],
-    accessUnit: (termParts.slice(1).join(' ') || 'months').replace(/^\w/, function (c) { return c.toUpperCase(); }) + ' of access'
+    priceNote: cfg.priceNote, accessTerm: lifetime ? 'Lifetime' : term,
+    accessNum: lifetime ? '\u221e' : termParts[0],
+    accessUnit: lifetime ? 'Lifetime access' : (termParts.slice(1).join(' ') || 'months').replace(/^\w/, function (c) { return c.toUpperCase(); }) + ' of access'
   };
   $$('[data-cfg]').forEach(function (el) { var v = fills[el.getAttribute('data-cfg')]; if (v != null) el.textContent = v; });
   $$('[data-runtime]').forEach(function (el) { el.textContent = hm(total); });
@@ -38,6 +39,19 @@
   });
   $$('[data-mail]').forEach(function (el) { el.href = 'mailto:' + cfg.contactEmail; if (/@/.test(el.textContent)) el.textContent = cfg.contactEmail; });
   $$('[data-conf]').forEach(function (el) { if (cfg.conferenceUrl) el.href = cfg.conferenceUrl; });
+
+  /* ---------- restore access (gated mode only) ---------- */
+  var rs = $('[data-restore]');
+  if (rs && cfg.gated && window.EIGAccess && EIGAccess.restoreAccess) {
+    rs.hidden = false;
+    if (/^#eo-restore/.test(location.hash)) { $('details', rs).open = true; if (location.hash === '#eo-restore-expired') $('[data-restore-msg]', rs).textContent = 'That link has expired or was already used. Send yourself a new one.'; }
+    $('[data-restore-form]', rs).addEventListener('submit', function (e) {
+      e.preventDefault();
+      var msg = $('[data-restore-msg]', rs), email = $('input', rs).value.trim();
+      msg.textContent = 'Sending…';
+      EIGAccess.restoreAccess(email).then(function () { msg.textContent = 'If ' + email + ' bought a pass, a sign-in link is on its way. It works once, for 30 minutes.'; });
+    });
+  }
 
   /* ---------- hero floating speakers ---------- */
   var fav = $('[data-float-avs]');
@@ -104,15 +118,29 @@
   }
 
   /* ---------- speakers ---------- */
+  var stage = [];
+  talks.forEach(function (t) { t.speakers.forEach(function (s) { if (stage.indexOf(s.id) < 0) stage.push(s.id); }); });
+  var room = (window.EIG_PARTNERS || []).filter(function (id) { return stage.indexOf(id) < 0 && people[id]; });
+  var nPeople = stage.length + room.length;
+  var WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  var TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  function words(n) { return n < 20 ? WORDS[n] : TENS[Math.floor(n / 10)] + (n % 10 ? '-' + WORDS[n % 10] : ''); }
+  function initials(name) { return name.split(/\s+/).filter(Boolean).map(function (w) { return w.charAt(0); }).slice(0, 2).join('').toUpperCase(); }
+  $$('[data-people]').forEach(function (el) { el.textContent = nPeople; });
+  $$('[data-people-words]').forEach(function (el) { var w = words(nPeople); el.textContent = w.charAt(0).toUpperCase() + w.slice(1); });
+  function speakerCard(id, i) {
+    var p = people[id] || { name: id, role: '' };
+    var ph = p.photo === false
+      ? '<div class="eo-speaker-ph is-mono" aria-hidden="true"><span>' + esc(initials(p.name)) + '</span></div>'
+      : '<div class="eo-speaker-ph"><img src="' + photo(id) + '" alt="' + esc(p.name) + '" width="240" height="240" loading="lazy"></div>';
+    return '<figure class="eo-speaker" data-reveal style="--d:' + (i % 7) * 0.05 + 's">' + ph +
+      '<figcaption><b>' + esc(p.name) + '</b><span>' + esc(p.role) + '</span></figcaption></figure>';
+  }
   var spk = $('[data-speakers]');
   if (spk) {
-    var order = [];
-    talks.forEach(function (t) { t.speakers.forEach(function (s) { if (order.indexOf(s.id) < 0) order.push(s.id); }); });
-    spk.innerHTML = order.map(function (id, i) {
-      var p = people[id] || { name: id, role: '' };
-      return '<figure class="eo-speaker" data-reveal style="--d:' + (i % 7) * 0.05 + 's">' +
-        '<div class="eo-speaker-ph"><img src="' + photo(id) + '" alt="' + esc(p.name) + '" width="240" height="240" loading="lazy"></div>' +
-        '<figcaption><b>' + esc(p.name) + '</b><span>' + esc(p.role) + '</span></figcaption></figure>';
+    spk.innerHTML = [['On stage', stage, ''], ['In the room and online', room, ' is-room']].filter(function (g) { return g[1].length; }).map(function (g) {
+      return '<div class="eo-spk-group' + g[2] + '"><p class="eo-spk-label" data-reveal>' + g[0] + ' <span>' + g[1].length + '</span></p>' +
+        '<div class="eo-speakers">' + g[1].map(speakerCard).join('') + '</div></div>';
     }).join('');
   }
 

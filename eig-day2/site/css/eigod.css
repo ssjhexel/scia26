@@ -264,6 +264,12 @@
 .eigod .eo-roles b { color: var(--ink-2); font-weight: 500; }
 
 /* ---------- speakers ---------- */
+.eigod .eo-spk-group + .eo-spk-group { margin-top: 64px; padding-top: 40px; border-top: 1px solid var(--line, rgba(255, 255, 255, .08)); }
+.eigod .eo-spk-label { display: flex; align-items: baseline; gap: 12px; margin-bottom: 26px; font-size: 12px; font-weight: 600; letter-spacing: .26em; text-transform: uppercase; color: var(--copper-hi); }
+.eigod .eo-spk-label span { color: var(--muted); letter-spacing: .1em; font-weight: 500; }
+.eigod .eo-speaker-ph.is-mono { display: grid; place-items: center; background: radial-gradient(120% 120% at 30% 20%, rgba(232, 179, 138, .22), rgba(12, 24, 44, .9) 70%), var(--bg-3); }
+.eigod .eo-speaker-ph.is-mono::after { display: none; }
+.eigod .eo-speaker-ph.is-mono span { font-family: var(--serif); font-size: clamp(30px, 3.4vw, 48px); line-height: 1; color: var(--copper-hi); letter-spacing: .02em; }
 .eigod .eo-speakers { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 28px 18px; }
 .eigod .eo-speaker { display: flex; flex-direction: column; gap: 14px; }
 .eigod .eo-speaker-ph { position: relative; aspect-ratio: 1; border-radius: 16px; overflow: hidden; background: var(--bg-3); }
@@ -508,3 +514,30 @@
   .eigod .eo-stat { padding: 28px 18px; }
   .eigod .eo-brand-txt span { display: none; }
 }
+
+/* partners: compact list on phones */
+@media (max-width: 720px) {
+  .eigod .eo-spk-group.is-room .eo-speakers { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 14px; }
+  .eigod .eo-spk-group.is-room .eo-speaker { flex-direction: row; align-items: center; gap: 12px; }
+  .eigod .eo-spk-group.is-room .eo-speaker-ph { flex: none; width: 52px; border-radius: 50%; }
+  .eigod .eo-spk-group.is-room .eo-speaker-ph::before { border-radius: 50%; }
+  .eigod .eo-spk-group.is-room .eo-speaker-ph.is-mono span { font-size: 18px; }
+  .eigod .eo-spk-group.is-room .eo-speaker b { font-size: 14px; }
+  .eigod .eo-spk-group.is-room .eo-speaker span { font-size: 12px; }
+  .eigod .eo-spk-group + .eo-spk-group { margin-top: 44px; padding-top: 32px; }
+}
+@media (min-width: 480px) and (max-width: 720px) {
+  .eigod .eo-spk-group:not(.is-room) .eo-speakers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* restore access */
+.eigod .eo-restore { margin-top: 14px; text-align: center; }
+.eigod .eo-restore summary { list-style: none; cursor: pointer; font-size: 13px; color: var(--copper-hi); }
+.eigod .eo-restore summary::-webkit-details-marker { display: none; }
+.eigod .eo-restore form { margin-top: 14px; text-align: left; }
+.eigod .eo-restore label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.eigod .eo-restore-row { display: flex; gap: 8px; }
+.eigod .eo-restore input { flex: 1; min-width: 0; height: 44px; padding: 0 14px; border-radius: 12px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .12); color: var(--ink); cursor: text; }
+.eigod .eo-restore input:focus { outline: none; border-color: var(--copper-hi); }
+.eigod .eo-card .eo-restore .eo-btn { width: auto; flex: none; height: 44px; padding: 0 18px; margin: 0; }
+.eigod .eo-restore-msg { margin-top: 10px; font-size: 12.5px; color: var(--muted); min-height: 1em; }

@@ -7,7 +7,7 @@ window.EIGOD_CONFIG = {
   price: 149,
   currency: 'USD',
   priceNote: 'One-time payment',
-  accessTerm: '12 months',
+  accessTerm: 'Lifetime',
 
   // Stripe Payment Link (Dashboard → Payment Links). Set its "After payment" redirect to:
   //   https://consultingeig.com/<watch-page>/?session_id={CHECKOUT_SESSION_ID}

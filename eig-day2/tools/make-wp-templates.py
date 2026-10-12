@@ -46,7 +46,7 @@ EXTRA_SALES = """
   // Pricing shown on the page. Stripe charges whatever the Payment Link itself is set to.
   'price'             => 149,
   'currency'          => 'USD',
-  'accessTerm'        => '12 months',
+  'accessTerm'        => 'Lifetime',
   'stripePaymentLink' => 'https://buy.stripe.com/test_XXXXXXXXXXXX',
   // Social sharing image (upload it, or point this at any image in your Media Library).
   'ogImage'           => content_url('/uploads/eig-ondemand/og-image.jpg'),"""
