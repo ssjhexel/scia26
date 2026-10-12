@@ -764,9 +764,9 @@ Object.assign(window.EIG_SPEAKERS, {
   'chris-white': { name: "Chris White", role: "Founder, scmBLOX" },
   'suresh-veeraraghavan': { name: "Suresh Veeraraghavan", role: "Partner, Accelance" },
   'sashi-wishart': { name: "Sashi Wishart", role: "Founder, Wishart Consulting Group" },
-  'erik-rodriguez': { name: "Erik Rodriguez", role: 'EIG partner', photo: false },   // title and photo to come
-  'ezra-firewalker': { name: "Ezra Firewalker", role: 'EIG partner', photo: false },   // title and photo to come
-  'arthi': { name: "Arthi", role: 'EIG partner', photo: false },   // title and photo to come
+  'erik-rodriguez': { name: "Erik Rodriguez", role: 'EIG partner' },   // title to come
+  'ezra-firewalker': { name: "Ezra Firewalker", role: 'EIG partner' },   // title to come
+  'arthi': { name: "Arthi", role: 'EIG partner' },   // title to come
   'mark-pound': { name: "Mark Pound", role: 'EIG partner', photo: false },   // title and photo to come
 });
 window.EIG_PARTNERS = [
