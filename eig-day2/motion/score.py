@@ -129,7 +129,7 @@ for k, n_ in enumerate(['A5', 'D6', 'F#6']): put('music', chime(n_, 2.2, .7), 25
 for k in range(8): put('bass', bass(38, .2, .35 * (1 - k / 8)), 26.0 + k * .5)
 
 # ---------------------------------------------------------------- voices + ducking
-VOICES = [('jose', .35), ('aaron', 8.0), ('greg', 12.1), ('hosni', 21.2)]
+VOICES = [('jose', .35), ('aaron', 7.64), ('greg', 12.1), ('hosni', 21.2)]
 duck = np.ones(N + SR * 4)
 for name, t0 in VOICES:
     v, sr = sf.read(f'{sys.argv[1]}/{name}.wav', always_2d=True)

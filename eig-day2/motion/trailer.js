@@ -122,7 +122,7 @@ function sceneC() {
   const dim = el(root, 'full', { background: 'linear-gradient(180deg, rgba(5,10,21,.55), rgba(5,10,21,.82))' });
   const q = words(root, 'Every process runs at the speed of its slowest step.', 'serif', { left: '120px', right: '160px', top: '300px', fontSize: '132px', lineHeight: '1.04' }, 8);
   const tag = nameTag(root, 'aaron-parr');
-  const T = 8.0, tw = [0.03, 0.35, 0.75, 1.40, 1.55, 1.66, 1.95, 2.12, 2.39, 3.12].map(x => x + T);
+  const tw = [7.70, 8.35, 8.75, 9.40, 9.55, 9.66, 9.95, 10.12, 10.39, 11.12];   // bite starts 7.64 s, 'Every' lands at 7.70
   return t => {
     if (t < 6.4 || t > 11.6) return S(root, { opacity: 0 });
     const out = P(t, 11.22, 11.5, E.inExpo);
@@ -132,10 +132,10 @@ function sceneC() {
       const a = 6.5 + i * .25, p = P(t, a, a + .65, E.outExpo);
       S(c, { opacity: p, transform: `translateY(${(1 - p) * 180}px) translateZ(${(1 - p) * -500 + Math.sin(t * .9 + i * 1.7) * 26}px) rotateY(${(1 - p) * -28}deg)` });
     });
-    const d = P(t, 7.7, 8.1, E.outCubic);
+    const d = P(t, 7.3, 7.7, E.outCubic);
     S(dim, { opacity: d }); S(persp, { filter: `blur(${d * 4}px)` });
     reveal(q, t, tw, .36);
-    tagPaint(tag, t, 8.3, 11.25);
+    tagPaint(tag, t, 7.95, 11.25);
   };
 }
 
