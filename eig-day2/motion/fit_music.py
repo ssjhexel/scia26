@@ -53,17 +53,19 @@ src_rms = np.sqrt(np.mean(src ** 2))
 for t, g in [(4.0, .55), (16.5, .4), (17.5, .32), (18.5, .32), (19.5, .32), (24.493, .7)]: put(boom(1.0), t, g * src_rms * 4)
 
 # voices: same placement, level and two-band ducking as the synthesized score
-VOICES = [('jose', .35), ('aaron', 7.64), ('greg', 12.1), ('hosni', 21.2)]
-voice = np.zeros_like(bed); duck = np.ones(bed.shape[1])
-for name, t0 in VOICES:
+# (bite, start, mid/high duck depth): the cold open ducks less so the intro swell masks Jose's room sound
+VOICES = [('jose', .35, .58), ('aaron', 7.64, .82), ('greg', 12.1, .82), ('hosni', 21.2, .82)]
+voice = np.zeros_like(bed); duck = np.ones(bed.shape[1]); depth = np.zeros(bed.shape[1])
+for name, t0, dd in VOICES:
     v, vsr = sf.read(f'{sys.argv[2]}/{name}.wav', always_2d=True); v = v.T
     rms = np.sqrt(np.mean(v[:, np.abs(v).max(0) > .01] ** 2) + 1e-12)
     v = v * (10 ** (-17 / 20) / rms); v = filt(v[0], lo=90); v = np.vstack([v, v])
     i = int(t0 * SR); voice[:, i:i + v.shape[1]] += v
-    duck[int((t0 - .12) * SR):int((t0 + v.shape[1] / SR + .2) * SR)] = 0
+    a_, b_ = int((t0 - .12) * SR), int((t0 + v.shape[1] / SR + .2) * SR); duck[a_:b_] = 0; depth[a_:b_] = dd
 k = int(.08 * SR); pres = 1 - np.convolve(duck, np.ones(k) / k, 'same')
 low = np.stack([filt(c, hi=250) for c in bed]); high = bed - low
-bed = low * (1 - .5 * pres) + high * (1 - .82 * pres)
+dep = np.convolve(depth, np.ones(k) / k, 'same') / np.maximum(pres, 1e-6) * (pres > 1e-6)
+bed = low * (1 - .5 * pres) + high * (1 - np.clip(dep, 0, .9) * pres)
 
 # bed level: about -21 dBFS RMS outside the voices, matching the talks' sense of loudness after mastering
 outside = duck[:N] > .5

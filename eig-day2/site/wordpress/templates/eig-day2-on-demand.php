@@ -972,7 +972,7 @@ Object.assign(window.EIG_SPEAKERS, {
   'sashi-wishart': { name: "Sashi Wishart", role: "Founder, Wishart Consulting Group" },
   'erik-rodriguez': { name: "Erik Rodriguez", role: 'EIG partner' },   // title to come
   'ezra-firewalker': { name: "Ezra Firewalker", role: 'EIG partner' },   // title to come
-  'arthi': { name: "Arthi", role: 'EIG partner' },   // title to come
+  'arthi': { name: "Arthi Sairaman", role: 'EIG partner' },   // title to come
   'mark-pound': { name: "Mark Pound", role: 'EIG partner', photo: false },   // title and photo to come
 });
 window.EIG_PARTNERS = [
