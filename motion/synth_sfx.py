@@ -1,8 +1,10 @@
 # Synthesizes every sound effect in code (no samples) from build/sfx.json.
 # Palette is deliberately restrained ("C-suite"): tuned, soft-edged sounds; big impacts only on anchor moments.
 # Every instance gets seeded micro-variation (pitch, brightness, length) so repeats never sound identical.
-import json, numpy as np, soundfile as sf
-SR = 48000; DUR = 120
+import json, sys, numpy as np, soundfile as sf
+# python3 synth_sfx.py [cues.json] [out.wav] [seconds]  (defaults: the highlight film)
+CUES, OUT = (sys.argv[1:3] + ['build/sfx.json', 'build/sfx.wav'][len(sys.argv[1:3]):])
+SR = 48000; DUR = int(sys.argv[3]) if len(sys.argv) > 3 else 120
 ROOT = 146.83  # D3 — everything tonal sits in D minor so it agrees with the 120 BPM bed
 def semi(p): return 2 ** (p / 12)
 def t_(d): return np.arange(int(d * SR)) / SR
@@ -125,7 +127,7 @@ GEN = {k: v for k, v in globals().items() if callable(v) and k in (
     'boom card stab lock accent shimmer tap pulse whoosh swipe sweep tape riser riser_short ticks chime chime_end flip truck sub clock').split()}
 END_ON_TIME = {'riser', 'riser_short', 'accent'}  # these build INTO their timestamp
 
-cues = json.load(open('build/sfx.json'))
+cues = json.load(open(CUES))
 mix = np.zeros(DUR * SR + SR * 4)
 for idx, c in enumerate(cues):
     rng = np.random.default_rng(1000 + idx)
@@ -139,6 +141,6 @@ for idx, c in enumerate(cues):
 mix = mix[:DUR * SR]
 mix = np.tanh(mix * .9) * .55
 st = np.stack([mix, mix], 1)
-sf.write('build/sfx.wav', st, SR, subtype='PCM_24')
+sf.write(OUT, st, SR, subtype='PCM_24')
 from collections import Counter
 print('sfx', len(cues), dict(Counter(c['type'] for c in cues)))
