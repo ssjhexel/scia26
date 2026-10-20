@@ -1,7 +1,7 @@
 // SCIA 2026 winners film (60 s, 30 fps). Same kit and look as film.js; a pure function of time: window.seek(t) paints frame t.
 // Every cut sits on the 120 BPM grid (one beat = 0.5 s) so the music can be fitted to it.
 (() => {
-const FPS = (window.TL && window.TL.fps) || 30, DUR = 60;
+const FPS = (window.TL && window.TL.fps) || 30, DUR = 61.5; // DUR is film time (see WARP)
 
 // ---------- math ----------
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -16,6 +16,15 @@ const E = {
   outBack: t => { const c1 = 1.4, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); },
 };
 const P = (t, a, b, e = E.outExpo) => e(clamp((t - a) / (b - a)));
+// the picture is authored in film time on a 120 BPM grid; window.WARP (written by fit_winners.py) is a list of
+// [output seconds, film seconds] knots that puts every film beat on the music track's own beat
+const WARP = window.WARP || [[0, 0], [DUR, DUR]];
+function knot(x, from, to) {
+  let i = 0; while (i < WARP.length - 2 && WARP[i + 1][from] <= x) i++;
+  const [a, b] = [WARP[i], WARP[i + 1]];
+  return a[to] + (x - a[from]) * (b[to] - a[to]) / (b[from] - a[from]);
+}
+const toFilm = t => knot(t, 0, 1), toOut = f => knot(f, 1, 0);
 function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const hash = (n) => mulberry32(n * 9301 + 49297)();
 
@@ -59,6 +68,7 @@ const LOGO = { intel: 'assets/logo_intel.jpg', gofo: 'assets/logo_gofo.jpg', gp:
 const PH = {
   screen: ['assets/winners/gofo-screen.jpg', [1536, 1024]], room: ['assets/winners/room.jpg', [2000, 1333]],
   panel: ['assets/winners/panel.jpg', [2000, 1124]], award: ['assets/winners/gofo-award.jpg', [2000, 1333]],
+  wide: ['assets/winners/award-wide.jpg', [2000, 1333]],
   rel: ['assets/winners/reliance-stage.jpg', [1600, 900]],
 };
 const PRELOAD = [...Object.values(LOGO), ...Object.values(PH).map(p => p[0])].map(u => { const i = new Image(); i.src = u; return i.decode().catch(() => {}); });
@@ -275,23 +285,36 @@ shot(12, 16, (r, a) => {
 });
 
 // ---------------- ON STAGE: the award ----------------
+const L3SHADE = 'linear-gradient(to top, rgba(3,8,20,.88) 0%, rgba(3,8,20,.35) 34%, rgba(3,8,20,0) 55%), linear-gradient(to bottom, rgba(3,8,20,.55) 0%, rgba(3,8,20,0) 22%)';
 WIPES.push(16);
-shot(16, 22, (r, a) => {
+shot(16, 18, (r, a) => {
   const pl = plate(r);
-  div(r, 'abs', { inset: '0', background: 'linear-gradient(to top, rgba(3,8,20,.88) 0%, rgba(3,8,20,.35) 34%, rgba(3,8,20,0) 55%), linear-gradient(to bottom, rgba(3,8,20,.55) 0%, rgba(3,8,20,0) 22%)' });
+  div(r, 'abs', { inset: '0', background: L3SHADE });
   const kick = div(r, 'lbl abs', { left: '120px', top: '80px', color: 'var(--white)' }, 'CSCMP EDGE 2026 · Nashville');
   const n1 = lower(r, 'GOFO', '2026 Supply Chain Innovation Award™ Winner', { left: '120px', top: '880px' }, 1.15);
+  sfx(a + .2, 'shimmer', .4, 4); sfx(a + .4, 'swipe', .35);
+  return (t) => {
+    const lt = t - a;
+    // the camera pushes in from the room toward the group on stage
+    pl.set({ ph: 'wide', crop: [0, 120, 2000, 1125], zoom: 1.0 + P(lt, 0, 2.2, E.inOutCubic) * .3, px: .7, py: .95, op: 1, br: 1.04 });
+    S(kick, { opacity: P(lt, .2, .6) });
+    wipeIn(n1, lt, .4);
+  };
+});
+shot(18, 22, (r, a) => {
+  const pl = plate(r);
+  div(r, 'abs', { inset: '0', background: L3SHADE });
+  const kick = div(r, 'lbl abs', { left: '120px', top: '80px', color: 'var(--white)' }, 'CSCMP EDGE 2026 · Nashville');
   const by = div(r, 'lbl abs', { left: '124px', top: '762px', color: 'var(--white)', opacity: 0 }, 'Award presented by');
   const c1 = lower(r, 'Jim de Vries', 'SCIA Chairperson', { left: '120px', top: '808px' });
   const c2 = lower(r, 'Brad Berger', 'President, SupplyChainBrain', { left: '120px', top: '888px' });
-  sfx(a + .2, 'shimmer', .4, 4); sfx(a + .5, 'swipe', .35); sfx(18.75, 'swipe', .35); sfx(19.0, 'tap', .35, 7); sfx(19.25, 'tap', .35, 12);
+  sfx(a + .25, 'swipe', .35); sfx(a + .5, 'tap', .35, 7); sfx(a + .75, 'tap', .35, 12);
   return (t) => {
     const lt = t - a;
-    pl.set({ ph: 'award', crop: [160, 150, 1680, 945], zoom: 1.0 + lt * .028, px: -.02, py: .05, op: 1, br: 1.02 });
-    S(kick, { opacity: P(lt, .3, .7) * (1 - P(lt, 5.5, 5.9)) });
-    wipeIn(n1, lt, .5, 2.6);
-    S(by, { opacity: P(lt, 2.9, 3.3) * (1 - P(lt, 5.5, 5.9)) });
-    wipeIn(c1, lt, 3.0, 5.6); wipeIn(c2, lt, 3.25, 5.6);
+    pl.set({ ph: 'award', crop: [160, 150, 1680, 945], zoom: 1.04 + lt * .03, px: -.02, py: .05, op: 1, br: 1.02 });
+    S(kick, { opacity: 1 - P(lt, 3.5, 3.9) });
+    S(by, { opacity: P(lt, .3, .6) * (1 - P(lt, 3.5, 3.9)) });
+    wipeIn(c1, lt, .45, 3.6); wipeIn(c2, lt, .7, 3.6);
   };
 });
 
@@ -350,24 +373,25 @@ shot(26, 32, (r, a) => {
   const h2 = words(r, 'Peak demand, planned.', 'D', { left: '146px', top: '790px', fontSize: '130px' });
   h2.ws[2].classList.add('red');
   const h3 = div(r, 'D abs', { left: '154px', top: '920px', fontSize: '72px', color: 'var(--sky)' }, 'Delivered on schedule.');
-  chips.forEach((c, i) => { sfx(26.5 + i * .5, 'stab', .45, [0, 2, 4, 5][i]); hit(26.5 + i * .5, .25); });
-  sfx(26.3, 'ticks', .4); sfx(28.5, 'tape', .4); sfx(29.0, 'sweep', .55, 0); sfx(29.5, 'boom', .7); hit(29.5, .8);
-  sfx(29.6, 'shimmer', .45, 7); sfx(30.5, 'tap', .35, 12); sfx(31.5, 'whoosh', .55);
+  const CHIP = [.25, .75, 1.5, 2.0]; // on the track's dotted accents
+  chips.forEach((c, i) => { sfx(a + CHIP[i], 'stab', .45, [0, 2, 4, 5][i]); hit(a + CHIP[i], .25); });
+  sfx(26.2, 'ticks', .4); sfx(29.0, 'tape', .4); sfx(28.6, 'sweep', .55, 0); sfx(30.0, 'boom', .7); hit(30.0, .8);
+  sfx(30.1, 'shimmer', .45, 7); sfx(31.0, 'tap', .35, 12); sfx(31.5, 'whoosh', .55);
   return (t) => {
     const lt = t - a;
-    S(lab, { opacity: P(lt, .05, .35) * (1 - P(lt, 2.6, 3.0)) });
+    S(lab, { opacity: P(lt, .05, .35) * (1 - P(lt, 3.0, 3.4)) });
     chips.forEach((c, i) => {
-      const p = P(lt, .5 + i * .5, .85 + i * .5, E.outBack), o = P(lt, 2.6 + i * .05, 3.0 + i * .05, E.inExpo);
+      const p = P(lt, CHIP[i], CHIP[i] + .35, E.outBack), o = P(lt, 3.0 + i * .05, 3.4 + i * .05, E.inExpo);
       S(c, { opacity: clamp(p * 3) * (1 - o), transform: `translateY(${(1 - p) * 30 - o * 40}px) scale(${lerp(.85, 1, clamp(p))})` });
     });
-    const m = P(lt, 2.9, 3.6, E.inOutCubic);
+    const m = P(lt, 3.4, 4.0, E.inOutCubic);
     const p = pts(m);
     const d = 'M' + p.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' L');
     curve.setAttribute('d', d);
     area.setAttribute('d', d + ` L${X1},${BY} L${X0},${BY} Z`); S(area, { opacity: m });
     const red = 1 - m;
     curve.setAttribute('stroke', `rgb(${Math.round(lerp(143, 227, red))},${Math.round(lerp(182, 36, red))},${Math.round(lerp(255, 59, red))})`);
-    strokeDraw(curve, P(lt, .3, 2.4, E.inOutCubic));
+    strokeDraw(curve, P(lt, .2, 2.6, E.inOutCubic));
     // peak label rides the top of the curve
     const top = p.reduce((q, c) => c[1] < q[1] ? c : q, p[0]);
     // the surge label sits beside the spike (clear of the chips); the planned label sits above the curve
@@ -375,19 +399,19 @@ shot(26, 32, (r, a) => {
     pkl.setAttribute('x', X0 + .6 * (X1 - X0) + (m > .5 ? 0 : 90)); pkl.setAttribute('y', m > .5 ? BY - 20 - smooth(.6) - 30 : top[1] + 60);
     pkl.textContent = m > .5 ? 'PLANNED OPERATION' : 'PEAK SURGE';
     pkl.setAttribute('fill', m > .5 ? '#8fb6ff' : '#e3243b');
-    S(pkl, { opacity: m > .5 ? P(lt, 3.4, 3.7) : P(lt, 1.6, 1.9) * (1 - P(lt, 2.8, 3.0)) });
+    S(pkl, { opacity: m > .5 ? P(lt, 3.9, 4.2) : P(lt, 1.7, 2.0) * (1 - P(lt, 3.2, 3.4)) });
     // progress marker travels the planned curve
-    const dp = P(lt, 3.6, 5.6, E.inOutCubic), k = Math.round(dp * N);
-    dot.setAttribute('cx', p[k][0]); dot.setAttribute('cy', p[k][1]); S(dot, { opacity: P(lt, 3.6, 3.8) });
-    S(h1, { opacity: P(lt, 3.3, 3.6) });
-    reveal(h2, lt, 3.4, .08, .6);
-    fade(h3, lt, 4.5, 4.9, 20);
+    const dp = P(lt, 4.0, 5.8, E.inOutCubic), k = Math.round(dp * N);
+    dot.setAttribute('cx', p[k][0]); dot.setAttribute('cy', p[k][1]); S(dot, { opacity: P(lt, 4.0, 4.2) });
+    S(h1, { opacity: P(lt, 3.8, 4.1) });
+    reveal(h2, lt, 3.9, .08, .6);
+    fade(h3, lt, 4.9, 5.3, 20);
   };
 });
 
 // ---------------- LEGACY: alongside past winners ----------------
 WIPES.push(32);
-shot(32, 37, (r, a) => {
+shot(32, 37.5, (r, a) => {
   const lab = words(r, 'Supply Chain Innovation Award™ · past winners include', 'lbl', { left: '0', width: '1920px', textAlign: 'center', top: '230px', color: 'var(--white)' });
   const TW = 340, TH = 190, GAP = 40, X3 = 960 - (3 * TW + 2 * GAP) / 2, X4 = 960 - (4 * TW + 3 * GAP) / 2;
   const items = [
@@ -402,30 +426,34 @@ shot(32, 37, (r, a) => {
     return { c, tl, tg };
   });
   const gl = glint(items[3].tl);
+  const slot = div(r, 'abs', { left: (X4 + 3 * (TW + GAP)) + 'px', top: '330px', width: TW + 'px', height: TH + 'px', borderRadius: '14px',
+    border: '3px dashed rgba(227,36,59,.8)', boxSizing: 'border-box', opacity: 0 });
   const h = words(r, 'GOFO now stands alongside them.', 'D', { left: '0', width: '1920px', textAlign: 'center', top: '700px', fontSize: '150px' });
   h.ws[0].classList.add('red');
-  [0, 1, 2].forEach(i => sfx(a + .3 + i * .5, 'card', .5, NOTE[i + 1]));
-  sfx(34.4, 'swipe', .4); sfx(35.0, 'boom', .65); hit(35.0, .7); sfx(35.1, 'shimmer', .5, 12); sfx(36.5, 'whoosh', .55);
+  [0, 1, 2].forEach(i => sfx(a + .5 + i * .5, 'card', .5, NOTE[i + 1]));
+  sfx(34.0, 'swipe', .4); sfx(34.75, 'tap', .4, 12); sfx(35.5, 'riser_short', .45); sfx(35.5, 'boom', .65); hit(35.5, .8);
+  sfx(35.6, 'shimmer', .5, 12); sfx(37.0, 'whoosh', .55);
   return (t) => {
     const lt = t - a;
     reveal(lab, lt, .05, .03);
-    const slide = P(lt, 2.4, 3.0, E.inOutCubic);
+    const slide = P(lt, 2.0, 2.6, E.inOutCubic);
+    S(slot, { opacity: P(lt, 2.75, 2.9) * (1 - P(lt, 3.45, 3.5, E.lin)), transform: `scale(${lerp(.9, 1, P(lt, 2.75, 3.1))})` });
     items.forEach(({ c, tl, tg }, i) => {
       const x = i < 3 ? lerp(X3 + i * (TW + GAP), X4 + i * (TW + GAP), slide) : X4 + 3 * (TW + GAP);
-      const p = i < 3 ? P(lt, .3 + i * .5, .9 + i * .5, E.outCubic) : P(lt, 3.0, 3.35, E.outCubic);
+      const p = i < 3 ? P(lt, .5 + i * .5, 1.1 + i * .5, E.outCubic) : P(lt, 3.25, 3.5, x => x * x * x);
       const y = i < 3 ? (1 - p) * 120 : (1 - p) * -260;
       S(c, { left: x + 'px', opacity: clamp(p * 2), transform: `translateY(${y}px) scale(${i === 3 ? lerp(1.25, 1, p) : 1})` });
-      S(tg, { opacity: P(lt, (i < 3 ? .6 + i * .5 : 3.3), (i < 3 ? 1.0 + i * .5 : 3.7)) });
-      if (i === 3) S(tl, { boxShadow: `0 30px 70px rgba(0,0,0,.45), 0 0 0 ${4 * P(lt, 3.0, 3.4)}px var(--red)` });
+      S(tg, { opacity: P(lt, (i < 3 ? .8 + i * .5 : 3.6), (i < 3 ? 1.2 + i * .5 : 4.0)) });
+      if (i === 3) S(tl, { boxShadow: `0 30px 70px rgba(0,0,0,.45), 0 0 0 ${4 * P(lt, 3.5, 3.8)}px var(--red), 0 0 ${60 * P(lt, 3.5, 3.6) * (1 - P(lt, 3.6, 4.4))}px rgba(227,36,59,.8)` });
     });
-    sweepGlint(gl, lt, 3.3, 4.0);
-    reveal(h, lt, 3.2, .07, .6);
+    sweepGlint(gl, lt, 3.7, 4.4);
+    reveal(h, lt, 3.7, .07, .6);
   };
 });
 
 // ---------------- RUNNER-UP: RELIANCE ----------------
-WIPES.push(37);
-shot(37, 41, (r, a) => {
+WIPES.push(37.5);
+shot(37.5, 41.5, (r, a) => {
   const pl = plate(r);
   div(r, 'abs', { inset: '0', background: 'linear-gradient(90deg, rgba(5,13,29,.82) 0%, rgba(5,13,29,.7) 100%)' });
   const big = div(r, 'D abs out', { left: '90px', top: '120px', fontSize: '470px', WebkitTextStroke: '3px rgba(245,247,251,.14)' }, '02');
@@ -437,7 +465,7 @@ shot(37, 41, (r, a) => {
   const bar = div(r, 'abs', { left: '700px', top: '742px', width: '120px', height: '8px', background: 'var(--red)', transformOrigin: '0 50%' });
   const sub = div(r, 'U abs', { left: '700px', top: '778px', width: '1060px', fontSize: '40px', fontWeight: 500, lineHeight: 1.3, color: 'rgba(245,247,251,.88)' },
     'From Reactive to Resilient: <b style="color:var(--white)">Emergency Response Network</b>');
-  sfx(a, 'card', .8, 4); sfx(a + .3, 'shimmer', .4, 4); hit(a, .5); sfx(a + 1.2, 'tap', .35, 9); sfx(40.5, 'whoosh', .55);
+  sfx(a, 'card', .8, 4); sfx(a + .3, 'shimmer', .4, 4); hit(a, .5); sfx(a + 1.2, 'tap', .35, 9); sfx(41.0, 'whoosh', .55);
   return (t) => {
     const lt = t - a;
     pl.set({ ph: 'rel', crop: [0, 0, 1600, 900], zoom: 1.1 + lt * .03, op: 1, blur: 14, br: .5, sat: .7 });
@@ -450,7 +478,7 @@ shot(37, 41, (r, a) => {
     fade(sub, lt, .9, 1.3);
   };
 }, { punch: false });
-shot(41, 46, (r, a) => {
+shot(41.5, 46, (r, a) => {
   const pl = plate(r);
   div(r, 'abs', { inset: '0', background: 'linear-gradient(to top, rgba(3,8,20,.88) 0%, rgba(3,8,20,.35) 34%, rgba(3,8,20,0) 55%)' });
   const n1 = lower(r, 'Reliance Industries Limited', 'Runner-up', { left: '120px', top: '836px' }, 1.15);
@@ -466,27 +494,28 @@ shot(41, 46, (r, a) => {
 
 // ---------------- CONGRATULATIONS ----------------
 WIPES.push(46);
-shot(46, 50, (r, a) => {
-  const p1 = plate(r, 1), p2 = plate(r, 2);
+shot(46, 52, (r, a) => {
+  const p1 = plate(r, 1), p2 = plate(r, 1), p3 = plate(r, 2);
   const shade = div(r, 'abs', { inset: '0', zIndex: 3, background: 'linear-gradient(to top, rgba(5,13,29,.94) 0%, rgba(5,13,29,.6) 34%, rgba(5,13,29,0) 58%)' });
   const h1 = words(r, 'Congratulations', 'D', { left: '0', width: '1920px', textAlign: 'center', top: '640px', fontSize: '170px', zIndex: 4 });
   const h2 = words(r, 'to all five finalists', 'D', { left: '0', width: '1920px', textAlign: 'center', top: '790px', fontSize: '80px', color: 'var(--sky)', zIndex: 4 });
   const TW = 190, TH = 108, GAP = 24, X0 = 960 - (5 * TW + 4 * GAP) / 2;
   const mini = FIN.map((f, i) => logoTile(r, f, TW, TH, { left: (X0 + i * (TW + GAP)) + 'px', top: '920px', zIndex: 4, borderRadius: '10px' }));
-  sfx(a + .3, 'shimmer', .4, 0); sfx(a + .5, 'pulse', .45); FIN.forEach((f, i) => sfx(a + 1.5 + i * .1, 'tap', .3, NOTE[i])); sfx(49.5, 'whoosh', .55);
+  sfx(a + .3, 'shimmer', .4, 0); sfx(a + .5, 'swipe', .35); sfx(a + .9, 'pulse', .45); FIN.forEach((f, i) => sfx(49.5 + i * .1, 'tap', .3, NOTE[i])); sfx(51.5, 'whoosh', .55);
   return (t) => {
     const lt = t - a;
-    const e1 = P(lt, 0, .8, E.outCubic), e2 = P(lt, .25, 1.05, E.outCubic);
-    p1.set({ ph: 'panel', crop: [0, 200, 2000, 1124 - 200], x: 600, y: 330, w: 1060, h: 476, zoom: 1.05 + lt * .03, op: e1, rz: -2.5, tx: (1 - e1) * -260, radius: 16 });
-    p2.set({ ph: 'room', crop: [0, 250, 2000, 900], x: 1330, y: 400, w: 1060, h: 477, zoom: 1.05 + lt * .03, op: e2, rz: 2, tx: (1 - e2) * 260, radius: 16 });
-    reveal(h1, lt, .5, .08, .6); reveal(h2, lt, .9, .05);
-    mini.forEach((m, i) => { const p = P(lt, 1.4 + i * .1, 1.9 + i * .1, E.outCubic); S(m, { opacity: p, transform: `translateY(${(1 - p) * 40}px)` }); });
+    const e1 = P(lt, 0, .8, E.outCubic), e2 = P(lt, .25, 1.05, E.outCubic), e3 = P(lt, .5, 1.2, E.outCubic);
+    p1.set({ ph: 'panel', crop: [0, 200, 2000, 924], x: 470 - lt * 6, y: 300, w: 820, h: 379, zoom: 1.05 + lt * .02, op: e1, rz: -4, tx: (1 - e1) * -260, radius: 16, br: .9 });
+    p2.set({ ph: 'room', crop: [0, 250, 2000, 900], x: 1450 + lt * 6, y: 300, w: 820, h: 369, zoom: 1.05 + lt * .02, op: e2, rz: 4, tx: (1 - e2) * 260, radius: 16, br: .9 });
+    p3.set({ ph: 'wide', crop: [0, 150, 2000, 1125], x: 960, y: 330, w: 820, h: 461, zoom: 1.08 + lt * .025, py: .3, op: e3, ty: (1 - e3) * -120, s: lerp(1.1, 1, e3), radius: 16 });
+    reveal(h1, lt, .9, .08, .6); reveal(h2, lt, 1.3, .05);
+    mini.forEach((m, i) => { const p = P(lt, 3.5 + i * .1, 4.0 + i * .1, E.outCubic); S(m, { opacity: p, transform: `translateY(${(1 - p) * 40}px)` }); });
   };
 });
 
 // ---------------- RESULTS LOCKUP ----------------
-WIPES.push(50);
-shot(50, 55, (r, a) => {
+WIPES.push(52);
+shot(52, 56, (r, a) => {
   const lab = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '200px', color: 'var(--white)' }, 'CSCMP EDGE 2026');
   const ti = words(r, 'Supply Chain Innovation Award™', 'D', { left: '0', width: '1920px', textAlign: 'center', top: '250px', fontSize: '110px' });
   const cols = [
@@ -503,7 +532,7 @@ shot(50, 55, (r, a) => {
   });
   const gl = glint(cols[0].tl);
   const dv = div(r, 'abs', { left: '959px', top: '480px', width: '2px', height: '440px', background: 'rgba(245,247,251,.25)', transformOrigin: '50% 0' });
-  sfx(a, 'card', .7, 0); sfx(a + .5, 'tap', .35, 7); sfx(a + .75, 'tap', .35, 12); sfx(a + 1.0, 'shimmer', .45, 7); sfx(54.5, 'whoosh', .7);
+  sfx(a, 'card', .7, 0); sfx(a + .5, 'tap', .35, 7); sfx(a + .75, 'tap', .35, 12); sfx(a + 1.0, 'shimmer', .45, 7); sfx(55.5, 'whoosh', .7); sfx(56, 'riser', .5);
   return (t) => {
     const lt = t - a;
     S(lab, { opacity: P(lt, .05, .35) }); reveal(ti, lt, .05, .07, .6);
@@ -514,7 +543,7 @@ shot(50, 55, (r, a) => {
 });
 
 // ---------------- END CARD ----------------
-shot(55, DUR + .01, (r, a) => {
+shot(56, DUR + .01, (r, a) => {
   const panel = div(r, 'abs', { inset: '0', background: '#f6f7fa' });
   const ti = div(r, 'D abs', { left: '0', width: '1920px', textAlign: 'center', top: '200px', fontSize: '110px', color: '#0b2a5c' }, 'Supply Chain Innovation Award<sup style="font-size:.3em;vertical-align:top">™</sup>');
   const by = div(r, 'lbl abs', { left: '0', width: '1920px', textAlign: 'center', top: '325px', color: '#5a6b86' }, 'by CSCMP &amp; SupplyChainBrain');
@@ -524,7 +553,7 @@ shot(55, DUR + .01, (r, a) => {
   const bar = div(r, 'abs', { left: '860px', top: '700px', width: '200px', height: '8px', background: 'var(--red)', transformOrigin: '50% 50%' });
   const cr = div(r, 'U abs', { left: '0', width: '1920px', textAlign: 'center', top: '760px', fontSize: '28px', fontWeight: 500, color: '#3a4a66', lineHeight: 1.6 },
     'Awards presented by <b style="color:#0b2a5c">Jim de Vries</b>, SCIA Chairperson<br>and <b style="color:#0b2a5c">Brad Berger</b>, President, SupplyChainBrain');
-  sfx(a, 'whoosh', .8); sfx(a + .25, 'chime_end', .8);
+  sfx(a, 'boom', .7); hit(a, .6); sfx(a + .25, 'chime_end', .8);
   return (t) => {
     const lt = t - a;
     const w = P(lt, 0, .45, E.inOutExpo);
@@ -609,7 +638,8 @@ function fitAll(root) {
 }
 $('caps').style.display = 'none'; $('capsband').style.display = 'none';
 let preloaded = false;
-window.seek = async (t) => {
+window.seek = async (tOut) => {
+  const t = toFilm(tOut);
   if (!preloaded) {
     await Promise.all(PRELOAD); await document.fonts.ready;
     for (const s of SHOTS) { s.root.style.display = 'block'; fitAll(s.root); s.root.style.display = 'none'; }
@@ -625,8 +655,8 @@ window.seek = async (t) => {
       if (s.punch) { const lt = t - s.a; S(s.root, { transform: `scale(${lerp(1.045, 1, P(lt, 0, .5))})`, opacity: P(lt, 0, .06, E.lin) }); }
     }
   }
-  drawWipe(t); camera(t); drawGrain(t);
+  drawWipe(t); camera(t); drawGrain(tOut);
   await Promise.all(pending);
 };
-window.getSfx = () => SFX.sort((a, b) => a.t - b.t);
+window.getSfx = () => SFX.map(c => Object.assign({}, c, { t: +toOut(c.t).toFixed(3) })).sort((a, b) => a.t - b.t);
 })();

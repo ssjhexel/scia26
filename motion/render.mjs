@@ -12,7 +12,9 @@ const ROOT = path.dirname(new URL(import.meta.url).pathname);
 // PAGE=winners.html BUILD=build-winners node render.mjs ...  renders the winners film (60 s, no timeline.json)
 const PAGE = process.env.PAGE || 'index.html';
 const BUILD = path.join(ROOT, process.env.BUILD || 'build');
-const TL = PAGE === 'index.html' ? JSON.parse(fs.readFileSync(path.join(ROOT, 'timeline.json'), 'utf8')) : { fps: 30, duration: +(process.env.DUR || 60) };
+// a page fitted to its music has BUILD/warp.json: output-time <-> film-time knots, and the output duration
+const WP = fs.existsSync(path.join(BUILD, 'warp.json')) ? JSON.parse(fs.readFileSync(path.join(BUILD, 'warp.json'), 'utf8')) : null;
+const TL = PAGE === 'index.html' ? JSON.parse(fs.readFileSync(path.join(ROOT, 'timeline.json'), 'utf8')) : { fps: 30, duration: WP ? WP.duration : +(process.env.DUR || 60) };
 const ENV = fs.existsSync(path.join(BUILD, 'env.json')) ? JSON.parse(fs.readFileSync(path.join(BUILD, 'env.json'), 'utf8')) : [];
 const EXE = process.env.CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const [, , mode = 'sheet', ...args] = process.argv;
@@ -21,7 +23,7 @@ async function openPage(browser) {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   page.on('pageerror', e => console.error('PAGE ERROR', e.message));
   page.on('console', m => { if (m.type() === 'error') console.error('console:', m.text()); });
-  await page.addInitScript(`window.TL=${JSON.stringify(TL)};window.ENV=${JSON.stringify(ENV)};`);
+  await page.addInitScript(`window.TL=${JSON.stringify(TL)};window.ENV=${JSON.stringify(ENV)};window.WARP=${JSON.stringify(WP && WP.knots)};`);
   await page.goto('file://' + path.join(ROOT, PAGE));
   await page.evaluate(() => document.fonts.ready);
   // load every face up front: a worker that starts mid-film must measure text with the real fonts
