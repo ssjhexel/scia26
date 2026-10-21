@@ -84,7 +84,7 @@ if (!function_exists('eigod_conf')) {
     static $c = null;
     if ($c === null) {
       $f = defined('EIGOD_CONFIG_FILE') ? EIGOD_CONFIG_FILE : dirname(rtrim(ABSPATH, '/')) . '/eigod-config.php';
-      $c = is_file($f) ? (array) include $f : array();
+      try { $c = is_file($f) ? (array) include $f : array(); } catch (\\Throwable $e) { $c = array(); } // a typo in the file = test-mode defaults
     }
     return array_key_exists($key, $c) ? $c[$key] : $default;
   }
@@ -138,7 +138,7 @@ def build(page, out, name, desc, step3, extra):
     php += '\n'.join(metas) + '\n' + og + '\n' + icon + '\n'
     php += "<?php if ($eigod_wp_hooks) wp_head(); ?>\n"
     php += '\n'.join(styles) + '\n'
-    php += "<script>window.EIGOD_OVERRIDES = <?php echo wp_json_encode($eigod_settings); ?>;</script>\n"
+    php += "<script>window.EIGOD_OVERRIDES = <?php echo wp_json_encode($eigod_settings, JSON_HEX_TAG | JSON_HEX_AMP); ?>;</script>\n"
     php += '</head>\n<body class="eigod-page">\n'
     php += body.strip() + '\n'
     php += '<script>window.EIGOD_INLINE=' + json.dumps(inline) + ';</script>\n' + hls + js

@@ -94,7 +94,19 @@ the browser in for good (same cookie as a purchase), with no payment and no Stri
 - **Shut it off for everyone:** change `partner_key` in `eigod-config.php` to any new text (or `''` to switch partners off). The old link stops working and every partner's session ends, at the video level too. Buyers are unaffected. Then send the new link.
 - **What it can't do:** anyone with the link gets in, so a forwarded link works until you change the key. There's no per-person record.
 
-## 7. Test checklist
+## 7. Security notes
+
+Reviewed and tested before release (all via simulated requests; run them again after any change to the PHP):
+- The video gate refuses path traversal (`../`, encoded `..%2f`), dotfiles and anything that isn't a video/caption/poster file; it compares signed cookies in constant time; **if the settings file is missing or broken, the videos stay locked** (and in the WordPress plugin and the templates a typo in the file falls back to test-mode defaults instead of crashing the page).
+- A purchase only counts when it was made through the configured Payment Link (`stripe_link_id`, required), so buyers of anything else on the same Stripe account can't use their own session to get in.
+- The emailed "restore access" link may only point back at this site (an earlier version accepted look-alike domains such as `consultingeig.com.evil.com`; fixed). It always answers the same way and is rate-limited.
+- The one endpoint that calls Stripe for a stranger (`/verify`) is rate-limited per IP, so it can't be used to exhaust Stripe's API limits.
+- The only secret the Stripe side needs is a read-only restricted key. No Stripe secret key is ever in front-end code. Page settings sent to the browser are an explicit list, not the config file.
+- Front-end code never inserts URL parameters into the page (they're only compared to known values or sent to the API URL-encoded).
+
+Known limits (by design, not bugs): anyone holding the partner link or a buyer's post-purchase address can get in until you rotate the key / the buyer's access is revoked; screen recording can't be stopped; the restore-email endpoint's response time can reveal whether an email has bought (it still shows the same message); this is custom code, not a security-audited product, so keep WordPress and plugins updated and delete `eigod-receive.php`.
+
+## 8. Test checklist
 
 - [ ] Sales page renders full-width, with no theme header or title overlapping the hero.
 - [ ] "Get access" opens Stripe Checkout (use test mode and card `4242 4242 4242 4242`).

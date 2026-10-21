@@ -49,7 +49,7 @@ STRIPE STEPS (put the results in eigod-config.php)
        - copy the link (https://buy.stripe.com/...)  ->  'stripe_payment_link'
        - set 'price' to the price you chose
   2. Its ID. Click your new Payment Link in the list. The ID starts with plink_ and is in the page address and on the
-     page. ->  'stripe_link_id'  (this makes sure only purchases made through THIS link unlock the videos).
+     page. ->  'stripe_link_id'  (REQUIRED: only purchases made through THIS link unlock the videos).
   3. The key. Developers > API keys > "Create restricted key". Name it "EIG access". In the permissions list find
      "Checkout Sessions" and set it to READ. Leave everything else on None. Create the key and copy it (Stripe shows
      it once). It starts rk_test_ in Test mode and rk_live_ in live mode.  ->  'stripe_secret_key'
@@ -66,3 +66,13 @@ PARTNERS
 THE SECRET
   'secret' in eigod-config.php is the site's private signing key. Don't share it and don't change it unless you mean
   to sign everyone out (buyers can get back in with "Already bought? Restore access").
+
+SECURITY CHECKLIST
+  - Make sure eigod-receive.php is DELETED from public_html. It was only for the one-time video upload. A leftover
+    upload page is the biggest risk on the server.
+  - eigod-config.php: in File Manager right-click it > Change Permissions > set 600 (owner read/write only).
+  - The Stripe key you put in it should be the restricted READ-ONLY key from Stripe step 3, never your main secret key.
+  - Keep WordPress, your theme and your plugins updated. Most real-world site hacks come in through an out-of-date
+    plugin, not through custom code like this.
+  - Anyone who has the buyer's post-purchase address (the one ending ?session_id=...) or the partner link can get in,
+    so those are shared-secret links. Rotate the partner key if the link gets out.

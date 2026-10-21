@@ -16,7 +16,7 @@ return array(
   // The price shown on the page (Stripe charges whatever the Payment Link itself says, so keep them equal).
   'price' => 149,
   // The Payment Link's ID, which starts with plink_  (Stripe > Payment links > click yours; it is in the page
-  // address). Recommended: it makes sure only purchases made through THIS link unlock the library.
+  // address). REQUIRED: only purchases made through THIS link unlock the library (without it, nobody can buy in).
   'stripe_link_id' => '',
   // A Stripe RESTRICTED key that can only READ Checkout Sessions. How to make one: README-FIRST.txt, step 2.
   // Use rk_test_... while you test and rk_live_... when you go live.

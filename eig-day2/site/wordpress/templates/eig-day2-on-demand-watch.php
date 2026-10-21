@@ -21,7 +21,7 @@ if (!function_exists('eigod_conf')) {
     static $c = null;
     if ($c === null) {
       $f = defined('EIGOD_CONFIG_FILE') ? EIGOD_CONFIG_FILE : dirname(rtrim(ABSPATH, '/')) . '/eigod-config.php';
-      $c = is_file($f) ? (array) include $f : array();
+      try { $c = is_file($f) ? (array) include $f : array(); } catch (\Throwable $e) { $c = array(); } // a typo in the file = test-mode defaults
     }
     return array_key_exists($key, $c) ? $c[$key] : $default;
   }
@@ -633,7 +633,7 @@ $eigod_wp_hooks = false;
 @keyframes eo-modal-in { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: none; } }
 </style>
 <style>html,body{margin:0;background:#050a15}</style>
-<script>window.EIGOD_OVERRIDES = <?php echo wp_json_encode($eigod_settings); ?>;</script>
+<script>window.EIGOD_OVERRIDES = <?php echo wp_json_encode($eigod_settings, JSON_HEX_TAG | JSON_HEX_AMP); ?>;</script>
 </head>
 <body class="eigod-page">
 <!-- EIGOD:START -->

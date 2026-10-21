@@ -12,11 +12,11 @@ SITE = 'https://consultingeig.com/austinondemand/watch/'
 
 KIT.mkdir(parents=True, exist_ok=True)
 cfg = KIT / 'eigod-config.php'
-if cfg.exists():
-    txt = cfg.read_text()
-else:
-    txt = (WP / 'eigod-config.php.example').read_text().replace('{SECRET}', secrets.token_hex(24)).replace('{PARTNER_KEY}', secrets.token_hex(16))
-    cfg.write_text(txt)
+old = cfg.read_text() if cfg.exists() else ''
+keep = lambda k: (re.search(r"'%s' => '([^']*)'" % k, old) or [None, None])[1]
+# always rebuilt from the current example, keeping the secret and partner key already made (links already sent keep working)
+txt = (WP / 'eigod-config.php.example').read_text().replace('{SECRET}', keep('secret') or secrets.token_hex(24)).replace('{PARTNER_KEY}', keep('partner_key') or secrets.token_hex(16))
+cfg.write_text(txt)
 partner_key = re.search(r"'partner_key' => '([^']*)'", txt).group(1)
 
 # 1) the zip: extract it in the home folder (the one that contains public_html) and every file lands in place

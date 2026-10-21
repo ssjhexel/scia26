@@ -24,7 +24,7 @@ function eigod_conf($key, $default = null) {
     static $c = null;
     if ($c === null) {
         $f = defined('EIGOD_CONFIG_FILE') ? EIGOD_CONFIG_FILE : dirname(rtrim(ABSPATH, '/\\')) . '/eigod-config.php';
-        $c = is_file($f) ? (array) include $f : array();
+        try { $c = is_file($f) ? (array) include $f : array(); } catch (\Throwable $e) { $c = array(); } // a typo in the file = test-mode defaults, never a crash
     }
     return array_key_exists($key, $c) ? $c[$key] : $default;
 }
@@ -75,8 +75,8 @@ function eigod_stripe($path) {
 }
 function eigod_session_ok($s) {
     $paid = isset($s['payment_status']) && $s['payment_status'] === 'paid';
-    $id   = (string) eigod_conf('stripe_link_id', '');   // only count purchases made through THIS Payment Link
-    $link = $id === '' || (isset($s['payment_link']) && $s['payment_link'] === $id);
+    $id   = (string) eigod_conf('stripe_link_id', '');   // only count purchases made through THIS Payment Link, so a
+    $link = $id !== '' && isset($s['payment_link']) && $s['payment_link'] === $id;   // buyer of anything else can't get in
     return $paid && $link;
 }
 function eigod_reply($ok, $code = 200) { return new WP_REST_Response(array('ok' => (bool) $ok), $code); }
@@ -86,6 +86,10 @@ add_action('rest_api_init', function () {
     register_rest_route('eigod/v1', '/verify', array('methods' => 'GET', 'permission_callback' => '__return_true',
         'callback' => function (WP_REST_Request $req) {
             $sid = sanitize_text_field($req->get_param('session_id'));
+            $rl  = 'eigod_rv_' . md5(isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '');
+            $n   = (int) get_transient($rl);
+            if ($n >= 30) return eigod_reply(false, 429);             // 30 checks per hour per IP: stops anyone using this to hammer Stripe
+            set_transient($rl, $n + 1, HOUR_IN_SECONDS);
             if (!preg_match('/^cs_(test|live)_[A-Za-z0-9]+$/', $sid) || !eigod_secret()) return eigod_reply(false, 400);
             $s = eigod_stripe('checkout/sessions/' . rawurlencode($sid));
             if (!$s || !eigod_session_ok($s)) return eigod_reply(false, 402);
@@ -99,7 +103,7 @@ add_action('rest_api_init', function () {
         'callback' => function () {
             $h = eigod_read_token(isset($_COOKIE[EIGOD_COOKIE]) ? $_COOKIE[EIGOD_COOKIE] : '');
             if (!$h) return eigod_reply(false, 401);
-            if ($h[0] === 'p' && $h !== eigod_partner_hash()) return eigod_reply(false, 401); // partner key changed or switched off
+            if (substr($h, 0, 1) === 'p' && $h !== eigod_partner_hash()) return eigod_reply(false, 401); // partner key changed or switched off
             eigod_grant($h);
             return eigod_reply(true);
         }));
@@ -124,7 +128,10 @@ add_action('rest_api_init', function () {
             $tries = (int) get_transient($ip);
             if ($tries >= 5) return eigod_reply(true);               // quietly rate-limited: 5 per hour per IP
             set_transient($ip, $tries + 1, HOUR_IN_SECONDS);
-            if (!is_email($email) || !eigod_secret() || strpos($back, home_url()) !== 0) return eigod_reply(true);
+            $bh = wp_parse_url($back); $hh = wp_parse_url(home_url());
+            $same_site = $bh && $hh && !empty($bh['host']) && !empty($hh['host']) && strcasecmp($bh['host'], $hh['host']) === 0
+                         && isset($bh['scheme']) && in_array($bh['scheme'], array('http', 'https'), true) && empty($bh['user']);
+            if (!is_email($email) || !eigod_secret() || !$same_site) return eigod_reply(true);
             $q = 'checkout/sessions?limit=20&status=complete&customer_details[email]=' . rawurlencode($email)
                . (eigod_conf('stripe_link_id') ? '&payment_link=' . rawurlencode(eigod_conf('stripe_link_id')) : '');
             $list = eigod_stripe($q);

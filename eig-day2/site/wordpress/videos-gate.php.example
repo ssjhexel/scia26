@@ -9,11 +9,12 @@
  * It doesn't load WordPress, so it stays fast. Settings come from /home/<account>/eigod-config.php (one level above
  * public_html).
  */
-$cfg = @include __DIR__ . '/../eigod-config.php';
-$cfg = is_array($cfg) ? $cfg : array();
-$secret = isset($cfg['secret']) ? (string) $cfg['secret'] : '';
-
 function deny($code = 403) { http_response_code($code); header('Cache-Control: no-store'); exit; }
+
+// If the settings file is missing or broken the videos stay LOCKED (an open library is the worse mistake).
+try { $cfg = is_file(__DIR__ . '/../eigod-config.php') ? include __DIR__ . '/../eigod-config.php' : false; } catch (\Throwable $e) { $cfg = false; }
+if (!is_array($cfg)) deny(503);
+$secret = isset($cfg['secret']) ? (string) $cfg['secret'] : '';
 
 if (!empty($cfg['gated'])) {
     // 1. Verify the cookie: payload.hmac, payload = base64url(expiry.id)
