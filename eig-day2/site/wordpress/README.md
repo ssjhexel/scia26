@@ -81,10 +81,29 @@ The test build has `gated: false`, so everything is open. To lock it down:
 
 **Limits of the protection:** like any non-DRM streaming, this stops casual link-sharing, but not screen recording.
 
-## 6. Test checklist
+## 6. Free access for partners (private links)
+
+Each partner gets their own private link that signs their browser in for good, the same as a purchase. Nothing is charged and Stripe isn't involved. It needs gating on (section 5), because with gating off everyone already gets in.
+
+1. **Make the links** on your computer. Use the same string that's inside `eigod-secret.php`:
+   ```
+   EIGOD_SECRET='the string in eigod-secret.php' python3 tools/partner-link.py "Erik Rodriguez" "Ezra Firewalker"
+   ```
+   It prints one link per name, like `https://consultingeig.com/austinondemand/watch/?partner=<token>`. The links are signed, so they can't be guessed or edited.
+2. **Send each partner their own link** (not by posting it anywhere public). It works on any device, and the address is cleaned up after it's used.
+3. **Revoking:** add the partner's slug (the second column the tool prints) to `wp-config.php`:
+   ```php
+   define('EIGOD_REVOKED_PARTNERS', array('erik-rodriguez'));
+   ```
+   The link stops working and stops renewing at once. A browser that's already signed in keeps playing until its cookie lapses; to end everyone's session immediately, change the string in `eigod-secret.php` (buyers then use *Restore access*, and you'd re-make the partner links).
+
+**What it can't do:** anyone holding a link gets in, so a forwarded link works until you revoke it. That is why each partner has their own. There is no usage log.
+
+## 7. Test checklist
 
 - [ ] Sales page renders full-width, with no theme header or title overlapping the hero.
 - [ ] "Get access" opens Stripe Checkout (use test mode and card `4242 4242 4242 4242`).
 - [ ] After payment you land on the watch page, the first talk loads, and the playlist works.
 - [ ] Videos play on an iPhone (Safari) and in Chrome on desktop. The quality menu shows on desktop.
 - [ ] With gating on: in a private window, a video URL returns 403.
+- [ ] With gating on: a partner link opens the library in a private window; the same link with one character changed sends you to the pricing section.

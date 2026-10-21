@@ -21,6 +21,13 @@
  *   4. Make sure WordPress can send email (an SMTP plugin is recommended) for "Restore access" links.
  *   5. In both page templates set 'gated' => true.
  *
+ * Partner links (free access without a purchase): a private, signed link per partner, made with tools/partner-link.py
+ * using the same secret as the file above. The link is  <watch page>/?partner=<token>  and signs that browser in
+ * for good, exactly like a purchase. To cut a partner off, add their name to wp-config.php:
+ *        define('EIGOD_REVOKED_PARTNERS', array('erik-rodriguez'));
+ * That kills the link and stops renewals. A browser already signed in keeps working until its cookie lapses; to end
+ * every session at once, change the secret in eigod-secret.php (buyers then restore access by email).
+ *
  * Lifetime access, in practice: browsers cap any cookie at about 400 days, so the cookie is renewed silently
  * on every visit (/refresh), and a buyer on a new device, or after clearing cookies, restores access with the
  * email they paid with (/restore sends a one-time link checked against Stripe, /redeem signs them in).
@@ -56,6 +63,16 @@ function eigod_read_token($tok, $prefix = '') {
     if (count($bits) !== 2 || (int) $bits[0] < time()) return false;
     return $bits[1];
 }
+/** partner token = base64url(name) . '.' . hmac('p' . base64url(name))   (made by tools/partner-link.py) */
+function eigod_partner_name($tok) {
+    $parts = explode('.', (string) $tok);
+    if (count($parts) !== 2 || !eigod_secret()) return false;
+    if (!hash_equals(hash_hmac('sha256', 'p' . $parts[0], eigod_secret()), $parts[1])) return false;
+    $name = eigod_unb64($parts[0]);
+    return preg_match('/^[a-z0-9-]{1,40}$/', $name) ? $name : false;
+}
+function eigod_partner_hash($name) { return eigod_email_hash('partner:' . $name); }
+function eigod_revoked_partners() { return defined('EIGOD_REVOKED_PARTNERS') ? (array) EIGOD_REVOKED_PARTNERS : array(); }
 function eigod_grant($email_hash) {
     $expires = time() + EIGOD_DAYS * DAY_IN_SECONDS;
     $opts    = array('expires' => $expires, 'path' => '/', 'secure' => true, 'samesite' => 'Lax');
@@ -94,7 +111,17 @@ add_action('rest_api_init', function () {
         'callback' => function () {
             $h = eigod_read_token(isset($_COOKIE[EIGOD_COOKIE]) ? $_COOKIE[EIGOD_COOKIE] : '');
             if (!$h) return eigod_reply(false, 401);
+            foreach (eigod_revoked_partners() as $n) if ($h === eigod_partner_hash($n)) return eigod_reply(false, 401);
             eigod_grant($h);
+            return eigod_reply(true);
+        }));
+
+    // 2b. A partner's private link: valid signature, not revoked -> sign this browser in (no purchase).
+    register_rest_route('eigod/v1', '/partner', array('methods' => 'GET', 'permission_callback' => '__return_true',
+        'callback' => function (WP_REST_Request $req) {
+            $name = eigod_partner_name($req->get_param('token'));
+            if (!$name || in_array($name, eigod_revoked_partners(), true)) return eigod_reply(false, 401);
+            eigod_grant(eigod_partner_hash($name));
             return eigod_reply(true);
         }));
 

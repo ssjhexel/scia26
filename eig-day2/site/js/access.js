@@ -6,6 +6,7 @@
  *                              alongside the HttpOnly `eigod_access` cookie after verifying a Stripe
  *                              Checkout Session, or after a "Restore access" email link
  *                              (see wordpress/eigod-access.php.example). Access is lifetime.
+ *                              Partners get the same cookies from a private ?partner=<token> link.
  *
  * The real protection is server-side: the .htaccess on the videos folder refuses any request without
  * the HttpOnly cookie, so copying a video URL out of the page doesn't help anyone.
@@ -45,7 +46,14 @@
       if (cfg.gated) call(api + '/refresh');
       return Promise.resolve(true);
     }
-    var sessionId = params.get('session_id'), restore = params.get('restore');
+    var sessionId = params.get('session_id'), restore = params.get('restore'), partner = params.get('partner');
+    if (partner) {
+      // A partner's private link: the server checks its signature and signs this browser in without a purchase.
+      return call(api + '/partner?token=' + encodeURIComponent(partner)).then(function (res) {
+        if (res.ok) { dropParam(params, 'partner'); return true; }
+        return deny();
+      });
+    }
     if (sessionId) {
       // Returning from Stripe: ask the server to verify the Checkout Session and set the cookies.
       return call(api + '/verify?session_id=' + encodeURIComponent(sessionId)).then(function (res) {
