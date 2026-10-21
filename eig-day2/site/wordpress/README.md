@@ -15,7 +15,7 @@ Two standalone page templates, with no plugins and no page builder. Videos are s
 2. **Create each page:** go to *Pages → Add New*, add a title, choose the template under *Page Attributes → Template*, and publish. Leave the content empty; the template doesn't use the editor.
 3. **That's it.** Each template prints its own complete page, so your theme's header, footer and stylesheet never load and can't interfere. Fonts, images and scripts are all inside the file. The two pages find each other's addresses automatically.
 
-**Settings** sit at the top of each file: video folder, gating on/off, and price, currency and Stripe link (sales template only). Keep `gated` the same in both files.
+**Settings** (gating on/off, price, Stripe link and keys, partner key) all live in one file, `eigod-config.php`, in the folder above `public_html`; see section 5. The templates read it, so you don't edit them. With no config file the pages run in test mode.
 
 - **Analytics or pixel plugins:** these need WordPress's hooks. Set `$eigod_wp_hooks = true` and the page runs `wp_head()`/`wp_footer()`. That also loads your theme's CSS; the page is built to withstand it, but off is cleanest.
 - **SEO:** set the watch page to *noindex* (it already sends a noindex tag).
@@ -39,8 +39,8 @@ Optionally, add a 1200×630 sharing image at `wp-content/uploads/eig-ondemand/og
 
 1. In the Stripe Dashboard, create a **Product**, "Day 2 On-Demand Pass", with a one-time price.
 2. Create a **Payment Link** for it. Under *After payment*, choose **Don't show confirmation page** and redirect to:
-   `https://consultingeig.com/day-2-on-demand/watch/?session_id={CHECKOUT_SESSION_ID}`
-3. Paste the link into `config.js` → `stripePaymentLink`, and set `price` to match. The page displays the price; Stripe charges whatever the Payment Link says.
+   `https://consultingeig.com/austinondemand/watch/?session_id={CHECKOUT_SESSION_ID}` (your watch page's address)
+3. Paste the link into `eigod-config.php` → `stripe_payment_link`, and set `price` to match. The page displays the price; Stripe charges whatever the Payment Link says.
 
 Every "Get access" button now goes to Stripe Checkout. Stripe emails the receipt.
 
@@ -61,43 +61,38 @@ masters/09.mp4               ← plain MP4 copy for your archive; blocked from t
 - **Bandwidth:** slides compress well, so 1080p averages 0.5–0.9 Mbps, about 0.4 GB per viewer-hour, and less on phones thanks to adaptive streaming. A buyer who watches everything uses roughly 1 GB. Check the bandwidth allowance on your KnownHost plan; it's the only cost that grows with sales.
 - **Overflow option:** Cloudflare R2's free tier (10 GB storage, no egress fees) can hold the same folder. Point `videoBase` at the R2 URL; nothing else changes.
 
-## 5. Turn on gating (when you're ready to sell)
+## 5. Turn on gating, and the partner link
 
-The test build has `gated: false`, so everything is open. To lock it down:
+All of this is in **`READ-ME-FIRST.txt`**, written for someone who doesn't want to touch code, and the files come
+ready-made from the **gating kit**:
 
-1. **Install the access plugin.** Copy `eigod-access.php.example` to `wp-content/mu-plugins/eigod-access.php` and follow the setup comment at the top. That covers the Stripe secret key in `wp-config.php` and a shared secret file kept above the web root.
-2. **Install the video gate.**
-   - Put `eigod-gate.php` (from `videos-gate.php.example`) in your site's top folder, `public_html/`. Your server blocks PHP inside `uploads`, so it can't go next to the videos.
-   - Replace `wp-content/uploads/eig-ondemand/videos/.htaccess` with `videos.htaccess.example`, which sends every video request through that gate.
-3. **Switch it on.** Set `'gated' => true` in the settings at the top of **both** page templates and re-upload them.
+```
+python3 tools/make-gating-kit.py      ->  deploy/gating-kit/   (git-ignored, because it holds your secrets)
+```
+
+The kit is a zip to extract in the cPanel home folder (the settings file, the video gate and the access plugin land in
+place), plus the two page templates, the video `.htaccess`, and `partner-link.txt`. **Every setting lives in one file**,
+`eigod-config.php`, in the folder that contains `public_html`: the go-live switch (`'gated'`), the Stripe link, price
+and keys, and the partner key. The templates read it, so you never edit them. Going live is changing `'gated'` to `true`.
 
 **How it works:**
-- **Checkout to library:** Stripe sends the buyer back with a `session_id`. The plugin verifies it server-side with Stripe's API, then sets an HttpOnly signed cookie.
+- **Checkout to library:** Stripe sends the buyer back with a `session_id`. The plugin verifies it server-side with Stripe's API (using a restricted, read-only key), then sets an HttpOnly signed cookie.
 - **The cookie:** the watch page and every video file check it. A copied video link doesn't work without it.
 - **Lifetime access:** browsers cap any cookie at about 400 days, so the plugin renews it silently on every visit.
 - **New device or cleared cookies:** the buyer clicks *Already bought? Restore access* under the buy button and enters the email they paid with. The plugin checks Stripe for a paid pass and emails a one-time sign-in link that's valid for 30 minutes. It always gives the same reply, so nobody can use it to look up who bought. WordPress must be able to send email; an SMTP plugin is recommended.
+- **Test mode:** with `'gated' => false`, the video gate passes everything through, so you can switch the protection on and check playback before going live.
 
 **If you want accounts instead:** use a membership plugin with Stripe built in (Paid Memberships Pro, MemberPress or WP Simple Pay) to protect the watch page, and set the same cookie on login.
 
 **Limits of the protection:** like any non-DRM streaming, this stops casual link-sharing, but not screen recording.
 
-## 6. Free access for partners (private links)
+## 6. Free access for partners (one shared link)
 
-Each partner gets their own private link that signs their browser in for good, the same as a purchase. Nothing is charged and Stripe isn't involved. It needs gating on (section 5), because with gating off everyone already gets in.
+`partner-link.txt` holds one link: `<watch page>/?partner=<partner_key>`. Send the same link to every partner. It signs
+the browser in for good (same cookie as a purchase), with no payment and no Stripe involved. Only matters once gating is on.
 
-1. **Make the links** on your computer. Use the same string that's inside `eigod-secret.php`:
-   ```
-   EIGOD_SECRET='the string in eigod-secret.php' python3 tools/partner-link.py "Erik Rodriguez" "Ezra Firewalker"
-   ```
-   It prints one link per name, like `https://consultingeig.com/austinondemand/watch/?partner=<token>`. The links are signed, so they can't be guessed or edited.
-2. **Send each partner their own link** (not by posting it anywhere public). It works on any device, and the address is cleaned up after it's used.
-3. **Revoking:** add the partner's slug (the second column the tool prints) to `wp-config.php`:
-   ```php
-   define('EIGOD_REVOKED_PARTNERS', array('erik-rodriguez'));
-   ```
-   The link stops working and stops renewing at once. A browser that's already signed in keeps playing until its cookie lapses; to end everyone's session immediately, change the string in `eigod-secret.php` (buyers then use *Restore access*, and you'd re-make the partner links).
-
-**What it can't do:** anyone holding a link gets in, so a forwarded link works until you revoke it. That is why each partner has their own. There is no usage log.
+- **Shut it off for everyone:** change `partner_key` in `eigod-config.php` to any new text (or `''` to switch partners off). The old link stops working and every partner's session ends, at the video level too. Buyers are unaffected. Then send the new link.
+- **What it can't do:** anyone with the link gets in, so a forwarded link works until you change the key. There's no per-person record.
 
 ## 7. Test checklist
 

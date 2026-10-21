@@ -1,0 +1,68 @@
+EIG DAY 2 ON-DEMAND: SWITCHING ON PAYMENT + THE PARTNER LINK
+=============================================================
+Three parts. Nothing changes for visitors until Part C.
+
+WHAT'S IN THIS KIT
+  eigod-gating-kit.zip         the files for the server (extracted in Part A)
+  eig-day2-on-demand.php       the sales page template (re-upload in Part A)
+  eig-day2-on-demand-watch.php the watch page template (re-upload in Part A)
+  videos-htaccess.txt          switches the video protection on (Part B)
+  partner-link.txt             the ONE link you send to partners
+  eigod-config.php             the one settings file (it's also inside the zip)
+
+PART A. UPLOAD THE FILES (visitors notice nothing)
+  1. cPanel > File Manager. In the left column click your HOME folder (the one that CONTAINS public_html; it is NOT
+     inside public_html). Upload eigod-gating-kit.zip there, right-click it > Extract. This creates:
+        eigod-config.php                                        (home folder)
+        public_html/eigod-gate.php
+        public_html/wp-content/mu-plugins/eigod-access.php      (WordPress loads this on its own; no activation)
+     Then delete the zip.
+  2. Upload the two .php templates into  public_html/wp-content/themes/dfd-ronneby_child/  (overwrite the old ones).
+     You never need to edit them again; their settings now come from eigod-config.php.
+  3. In Stripe (turn the Test mode switch ON for now), do steps 1-3 below. The two things you get go in eigod-config.php.
+
+PART B. TURN ON THE VIDEO PROTECTION (still open to everyone, so you can check it works)
+  1. File Manager > public_html/wp-content/uploads/eig-ondemand/videos/ (click Settings, tick "Show Hidden Files").
+     Rename the existing .htaccess to .htaccess-old.
+  2. Upload videos-htaccess.txt there and rename it to  .htaccess
+  3. Open the watch page in your browser and play a talk. It should play exactly as before.
+     If it doesn't: delete .htaccess and rename .htaccess-old back. Nothing else is affected.
+
+PART C. GO LIVE
+  1. File Manager > eigod-config.php > Edit. Change  'gated' => false  to  'gated' => true  and Save.
+  2. Check in a private/incognito window:
+       - the watch page sends you to the sales page
+       - a video file address (open one from the browser's network tab, or just try playing) is refused
+       - the partner link (partner-link.txt) opens the library
+       - a test purchase (card 4242 4242 4242 4242, any future date, any CVC) lands you in the library
+  3. Going back to test mode at any time: set 'gated' => false.
+  4. When you're ready for real sales, repeat Stripe steps 1-3 with the Test switch OFF, paste the live values into
+     eigod-config.php (stripe_payment_link, stripe_link_id, stripe_secret_key), and test once with a real card
+     (refund yourself afterwards).
+
+STRIPE STEPS (put the results in eigod-config.php)
+  1. Product + Payment Link. Product catalogue > Add product: "Day 2 On-Demand Pass", one-time price (149 USD).
+     Then Payment links > New > pick that product. Open the "After payment" tab: choose "Don't show confirmation page"
+     and set the redirect address to
+         https://consultingeig.com/austinondemand/watch/?session_id={CHECKOUT_SESSION_ID}
+     (type {CHECKOUT_SESSION_ID} exactly like that; Stripe fills it in). Create the link.
+       - copy the link (https://buy.stripe.com/...)  ->  'stripe_payment_link'
+       - set 'price' to the price you chose
+  2. Its ID. Click your new Payment Link in the list. The ID starts with plink_ and is in the page address and on the
+     page. ->  'stripe_link_id'  (this makes sure only purchases made through THIS link unlock the videos).
+  3. The key. Developers > API keys > "Create restricted key". Name it "EIG access". In the permissions list find
+     "Checkout Sessions" and set it to READ. Leave everything else on None. Create the key and copy it (Stripe shows
+     it once). It starts rk_test_ in Test mode and rk_live_ in live mode.  ->  'stripe_secret_key'
+     This key can only READ checkout records, so even if it leaked nobody could take money or change anything.
+     (Stripe moves menu items around now and then; look for "API keys" under Developers.)
+
+PARTNERS
+  Send partner-link.txt's link to all your partners. Anyone who opens it can watch for free, on any device, for good.
+  If the link gets passed beyond partners: in eigod-config.php change the text inside 'partner_key' to anything new.
+  The old link stops working for everyone at once (partners already signed in lose access too), and buyers are not
+  affected. Then send the new link (the address is the same, with ?partner=<your new text> on the end).
+  Setting 'partner_key' => '' switches partner access off.
+
+THE SECRET
+  'secret' in eigod-config.php is the site's private signing key. Don't share it and don't change it unless you mean
+  to sign everyone out (buyers can get back in with "Already bought? Restore access").

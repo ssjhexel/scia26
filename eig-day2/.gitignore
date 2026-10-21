@@ -8,3 +8,6 @@ deploy/.key
 deploy/eigod-receive.php
 site/trailer/
 __pycache__/
+
+# gating kit: holds the signing secret and partner key
+deploy/gating-kit/

@@ -15,6 +15,17 @@
  */
 if (!defined('ABSPATH')) exit;
 
+if (!function_exists('eigod_conf')) {
+  // A setting from eigod-config.php (the folder that contains public_html). Missing file = test mode defaults.
+  function eigod_conf($key, $default = null) {
+    static $c = null;
+    if ($c === null) {
+      $f = defined('EIGOD_CONFIG_FILE') ? EIGOD_CONFIG_FILE : dirname(rtrim(ABSPATH, '/')) . '/eigod-config.php';
+      $c = is_file($f) ? (array) include $f : array();
+    }
+    return array_key_exists($key, $c) ? $c[$key] : $default;
+  }
+}
 if (!function_exists('eigod_page_url')) {
   // URL of the first published page using the given template file, else a fallback path.
   function eigod_page_url($template, $fallback) {
@@ -30,9 +41,9 @@ $eigod_settings = array(
   'watchUrl'  => eigod_page_url('eig-day2-on-demand-watch.php', '/day-2-on-demand/watch/'),
   // Where the encoded talks are uploaded: <videoBase>/09/master.m3u8, <videoBase>/10/master.m3u8, ...
   'videoBase' => content_url('/uploads/eig-ondemand/videos/'),
-  // false = test mode, everything is open. true = the watch page needs a verified purchase
-  // (see wordpress/README.md, "Turn on gating"). Set the same value in both templates.
-  'gated'     => false,
+  // Test mode (everything open) or live (a purchase or the partner link is needed). Not set here: it is the
+  // 'gated' line in eigod-config.php, so both pages always agree. No file = test mode.
+  'gated'     => !empty(eigod_conf('gated', false)),
 );
 // true = also run wp_head()/wp_footer(), so plugins such as analytics, pixels or SEO can add their tags.
 // This also loads your theme's stylesheet; the page is built to withstand that, but off is cleanest.
@@ -970,7 +981,7 @@ window.EIG_TALKS = [
  *                              alongside the HttpOnly `eigod_access` cookie after verifying a Stripe
  *                              Checkout Session, or after a "Restore access" email link
  *                              (see wordpress/eigod-access.php.example). Access is lifetime.
- *                              Partners get the same cookies from a private ?partner=<token> link.
+ *                              Partners get the same cookies from the shared ?partner=<key> link.
  *
  * The real protection is server-side: the .htaccess on the videos folder refuses any request without
  * the HttpOnly cookie, so copying a video URL out of the page doesn't help anyone.
@@ -1012,8 +1023,8 @@ window.EIG_TALKS = [
     }
     var sessionId = params.get('session_id'), restore = params.get('restore'), partner = params.get('partner');
     if (partner) {
-      // A partner's private link: the server checks its signature and signs this browser in without a purchase.
-      return call(api + '/partner?token=' + encodeURIComponent(partner)).then(function (res) {
+      // The shared partner link: the server checks the key and signs this browser in without a purchase.
+      return call(api + '/partner?key=' + encodeURIComponent(partner)).then(function (res) {
         if (res.ok) { dropParam(params, 'partner'); return true; }
         return deny();
       });

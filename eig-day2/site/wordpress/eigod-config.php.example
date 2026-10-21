@@ -1,0 +1,34 @@
+<?php
+/**
+ * EIG Day 2 On-Demand: the ONE settings file. Lives in your home folder, the folder that CONTAINS public_html
+ * (not inside it), so it can't be opened from a browser. Edit it in cPanel: File Manager > select the file > Edit.
+ */
+return array(
+
+  // ---- Go live ------------------------------------------------------------------------------------------
+  // false = TEST MODE: everyone can watch, nothing is checked.
+  // true  = the library needs a purchase (or the partner link). Change this one word to go live.
+  'gated' => false,
+
+  // ---- Stripe -------------------------------------------------------------------------------------------
+  // The Payment Link people click to buy, e.g. https://buy.stripe.com/xxxxxxxx   (Stripe > Payment links)
+  'stripe_payment_link' => 'https://buy.stripe.com/test_XXXXXXXXXXXX',
+  // The price shown on the page (Stripe charges whatever the Payment Link itself says, so keep them equal).
+  'price' => 149,
+  // The Payment Link's ID, which starts with plink_  (Stripe > Payment links > click yours; it is in the page
+  // address). Recommended: it makes sure only purchases made through THIS link unlock the library.
+  'stripe_link_id' => '',
+  // A Stripe RESTRICTED key that can only READ Checkout Sessions. How to make one: README-FIRST.txt, step 2.
+  // Use rk_test_... while you test and rk_live_... when you go live.
+  'stripe_secret_key' => 'PASTE_YOUR_STRIPE_RESTRICTED_KEY_HERE',
+
+  // ---- Partners (free access) ---------------------------------------------------------------------------
+  // Anyone who opens  <your watch page>/?partner=<this key>  is let in without paying. Send the same link to all
+  // your partners. If it gets out, change the key (any new text) and the old link stops working for everybody;
+  // '' switches partner access off.
+  'partner_key' => '{PARTNER_KEY}',
+
+  // ---- Leave this alone ---------------------------------------------------------------------------------
+  // The site's private signing key. Changing it signs everyone out (buyers can get back in with "Restore access").
+  'secret' => '{SECRET}',
+);

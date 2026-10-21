@@ -1,49 +1,39 @@
 <?php
 /**
- * Plugin Name: EIG On-Demand Access (example)
+ * Plugin Name: EIG On-Demand Access
  * Description: Lifetime access to the Day 2 On-Demand library. Verifies Stripe Checkout Sessions, sets a signed
- *              HttpOnly cookie, renews it on every visit, and lets buyers restore access on any device by email.
- *              Install as wp-content/mu-plugins/eigod-access.php
+ *              HttpOnly cookie, renews it on every visit, lets buyers restore access on any device by email, and
+ *              signs in partners who use the one shared partner link.
+ *              Install as wp-content/mu-plugins/eigod-access.php   (the gating kit puts it there for you)
  *
- * EXAMPLE CODE: review it, test it in Stripe test mode, then switch to live keys.
- *
- * Setup:
- *   1. In wp-config.php (never in the page or JS):
- *        define('EIGOD_STRIPE_SECRET', 'sk_live_...');        // or sk_test_... while testing (a restricted key with
- *                                                             // read access to Checkout Sessions is enough)
- *        define('EIGOD_PAYMENT_LINK',  'plink_...');          // optional: only accept this Payment Link
- *   2. Create the secret shared with the video gate. Put it ABOVE the web root, e.g.
- *        /home/<account>/eigod-secret.php  containing:  <?php return 'a-long-random-string';
- *      and point EIGOD_SECRET_FILE at it in wp-config.php:
- *        define('EIGOD_SECRET_FILE', '/home/<account>/eigod-secret.php');
- *   3. Stripe Payment Link → After payment → "Don't show confirmation page" → redirect to
- *        https://consultingeig.com/<watch page>/?session_id={CHECKOUT_SESSION_ID}
- *   4. Make sure WordPress can send email (an SMTP plugin is recommended) for "Restore access" links.
- *   5. In both page templates set 'gated' => true.
- *
- * Partner links (free access without a purchase): a private, signed link per partner, made with tools/partner-link.py
- * using the same secret as the file above. The link is  <watch page>/?partner=<token>  and signs that browser in
- * for good, exactly like a purchase. To cut a partner off, add their name to wp-config.php:
- *        define('EIGOD_REVOKED_PARTNERS', array('erik-rodriguez'));
- * That kills the link and stops renewals. A browser already signed in keeps working until its cookie lapses; to end
- * every session at once, change the secret in eigod-secret.php (buyers then restore access by email).
+ * All settings live in ONE file above the web root: /home/<account>/eigod-config.php (see eigod-config.php.example).
  *
  * Lifetime access, in practice: browsers cap any cookie at about 400 days, so the cookie is renewed silently
  * on every visit (/refresh), and a buyer on a new device, or after clearing cookies, restores access with the
  * email they paid with (/restore sends a one-time link checked against Stripe, /redeem signs them in).
+ *
+ * Partners: one shared link, <watch page>/?partner=<partner_key>. Anyone with the link is signed in for good.
+ * To shut it off for everyone (including browsers already signed in), change partner_key in the config file
+ * (or set it to '' to switch partner access off); the old link and every partner cookie stop working at once.
  */
 
 if (!defined('ABSPATH')) exit;
+
+/** a setting from /home/<account>/eigod-config.php (the folder above public_html), or $default */
+function eigod_conf($key, $default = null) {
+    static $c = null;
+    if ($c === null) {
+        $f = defined('EIGOD_CONFIG_FILE') ? EIGOD_CONFIG_FILE : dirname(rtrim(ABSPATH, '/\\')) . '/eigod-config.php';
+        $c = is_file($f) ? (array) include $f : array();
+    }
+    return array_key_exists($key, $c) ? $c[$key] : $default;
+}
 
 const EIGOD_COOKIE = 'eigod_access';
 const EIGOD_DAYS   = 400;     // browser maximum; renewed on every visit, so access never lapses
 const EIGOD_LINK_MINUTES = 30; // restore links expire after this
 
-function eigod_secret() {
-    static $s = null;
-    if ($s === null) $s = defined('EIGOD_SECRET_FILE') ? (string) include EIGOD_SECRET_FILE : '';
-    return $s;
-}
+function eigod_secret() { return (string) eigod_conf('secret', ''); }
 function eigod_b64($s) { return rtrim(strtr(base64_encode($s), '+/', '-_'), '='); }
 function eigod_unb64($s) { return base64_decode(strtr($s, '-_', '+/')); }
 function eigod_email_hash($email) { return substr(hash('sha256', strtolower(trim($email))), 0, 16); }
@@ -63,16 +53,12 @@ function eigod_read_token($tok, $prefix = '') {
     if (count($bits) !== 2 || (int) $bits[0] < time()) return false;
     return $bits[1];
 }
-/** partner token = base64url(name) . '.' . hmac('p' . base64url(name))   (made by tools/partner-link.py) */
-function eigod_partner_name($tok) {
-    $parts = explode('.', (string) $tok);
-    if (count($parts) !== 2 || !eigod_secret()) return false;
-    if (!hash_equals(hash_hmac('sha256', 'p' . $parts[0], eigod_secret()), $parts[1])) return false;
-    $name = eigod_unb64($parts[0]);
-    return preg_match('/^[a-z0-9-]{1,40}$/', $name) ? $name : false;
+/** the id stored in a partner's cookie; starts with 'p' so it can't collide with a buyer's (hex) id. It changes
+ *  whenever partner_key changes, which is what ends every partner session. False when partner access is off. */
+function eigod_partner_hash() {
+    $k = (string) eigod_conf('partner_key', '');
+    return $k === '' ? false : 'p' . substr(hash('sha256', 'partner:' . $k), 0, 15);
 }
-function eigod_partner_hash($name) { return eigod_email_hash('partner:' . $name); }
-function eigod_revoked_partners() { return defined('EIGOD_REVOKED_PARTNERS') ? (array) EIGOD_REVOKED_PARTNERS : array(); }
 function eigod_grant($email_hash) {
     $expires = time() + EIGOD_DAYS * DAY_IN_SECONDS;
     $opts    = array('expires' => $expires, 'path' => '/', 'secure' => true, 'samesite' => 'Lax');
@@ -80,15 +66,17 @@ function eigod_grant($email_hash) {
     setcookie('eigod_ok', '1', $opts + array('httponly' => false)); // lets the page know to show the library
 }
 function eigod_stripe($path) {
-    if (!defined('EIGOD_STRIPE_SECRET')) return null;
+    $key = (string) eigod_conf('stripe_secret_key', '');
+    if ($key === '' || strpos($key, 'PASTE') !== false) return null;
     $res = wp_remote_get('https://api.stripe.com/v1/' . $path, array(
-        'headers' => array('Authorization' => 'Bearer ' . EIGOD_STRIPE_SECRET), 'timeout' => 15));
+        'headers' => array('Authorization' => 'Bearer ' . $key), 'timeout' => 15));
     if (is_wp_error($res) || wp_remote_retrieve_response_code($res) !== 200) return null;
     return json_decode(wp_remote_retrieve_body($res), true);
 }
 function eigod_session_ok($s) {
     $paid = isset($s['payment_status']) && $s['payment_status'] === 'paid';
-    $link = !defined('EIGOD_PAYMENT_LINK') || (isset($s['payment_link']) && $s['payment_link'] === EIGOD_PAYMENT_LINK);
+    $id   = (string) eigod_conf('stripe_link_id', '');   // only count purchases made through THIS Payment Link
+    $link = $id === '' || (isset($s['payment_link']) && $s['payment_link'] === $id);
     return $paid && $link;
 }
 function eigod_reply($ok, $code = 200) { return new WP_REST_Response(array('ok' => (bool) $ok), $code); }
@@ -111,17 +99,18 @@ add_action('rest_api_init', function () {
         'callback' => function () {
             $h = eigod_read_token(isset($_COOKIE[EIGOD_COOKIE]) ? $_COOKIE[EIGOD_COOKIE] : '');
             if (!$h) return eigod_reply(false, 401);
-            foreach (eigod_revoked_partners() as $n) if ($h === eigod_partner_hash($n)) return eigod_reply(false, 401);
+            if ($h[0] === 'p' && $h !== eigod_partner_hash()) return eigod_reply(false, 401); // partner key changed or switched off
             eigod_grant($h);
             return eigod_reply(true);
         }));
 
-    // 2b. A partner's private link: valid signature, not revoked -> sign this browser in (no purchase).
+    // 2b. The shared partner link: right key -> sign this browser in (no purchase).
     register_rest_route('eigod/v1', '/partner', array('methods' => 'GET', 'permission_callback' => '__return_true',
         'callback' => function (WP_REST_Request $req) {
-            $name = eigod_partner_name($req->get_param('token'));
-            if (!$name || in_array($name, eigod_revoked_partners(), true)) return eigod_reply(false, 401);
-            eigod_grant(eigod_partner_hash($name));
+            $ph  = eigod_partner_hash();
+            $key = (string) $req->get_param('key');
+            if (!$ph || !eigod_secret() || !hash_equals((string) eigod_conf('partner_key'), $key)) return eigod_reply(false, 401);
+            eigod_grant($ph);
             return eigod_reply(true);
         }));
 
@@ -137,7 +126,7 @@ add_action('rest_api_init', function () {
             set_transient($ip, $tries + 1, HOUR_IN_SECONDS);
             if (!is_email($email) || !eigod_secret() || strpos($back, home_url()) !== 0) return eigod_reply(true);
             $q = 'checkout/sessions?limit=20&status=complete&customer_details[email]=' . rawurlencode($email)
-               . (defined('EIGOD_PAYMENT_LINK') ? '&payment_link=' . rawurlencode(EIGOD_PAYMENT_LINK) : '');
+               . (eigod_conf('stripe_link_id') ? '&payment_link=' . rawurlencode(eigod_conf('stripe_link_id')) : '');
             $list = eigod_stripe($q);
             $found = false;
             foreach (($list && isset($list['data'])) ? $list['data'] : array() as $s) { if (eigod_session_ok($s)) { $found = true; break; } }

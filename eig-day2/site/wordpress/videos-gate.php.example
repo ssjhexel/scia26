@@ -1,26 +1,37 @@
 <?php
 /**
- * EIG On-Demand video gate (example). Save as  public_html/eigod-gate.php  (your site's top folder:
- * many hosts, including this one, refuse to run PHP inside wp-content/uploads).
- * The .htaccess in wp-content/uploads/eig-ondemand/videos/ sends every video request here. This script checks the signed
- * eigod_access cookie (set by eigod-access.php after a verified Stripe payment) and only then
- * streams the requested playlist/segment. It does not load WordPress, so it stays fast.
- *
- * EXAMPLE CODE: review and test before relying on it.
+ * EIG On-Demand video gate. Lives at  public_html/eigod-gate.php  (your site's top folder: many hosts, including this
+ * one, refuse to run PHP inside wp-content/uploads).
+ * The .htaccess in wp-content/uploads/eig-ondemand/videos/ sends every video request here.
+ *   - gated = false in eigod-config.php: the file is served to anyone (test mode, same as before).
+ *   - gated = true: the file is served only to a browser holding the signed eigod_access cookie (set by the access
+ *     plugin after a verified Stripe payment, a restore-access link, or the shared partner link).
+ * It doesn't load WordPress, so it stays fast. Settings come from /home/<account>/eigod-config.php (one level above
+ * public_html).
  */
-$secret = (string) include '/home/<account>/eigod-secret.php'; // same file as EIGOD_SECRET_FILE
+$cfg = @include __DIR__ . '/../eigod-config.php';
+$cfg = is_array($cfg) ? $cfg : array();
+$secret = isset($cfg['secret']) ? (string) $cfg['secret'] : '';
 
 function deny($code = 403) { http_response_code($code); header('Cache-Control: no-store'); exit; }
 
-// 1. Verify the cookie: payload.hmac, payload = base64url(expiry.emailhash)
-$tok = isset($_COOKIE['eigod_access']) ? $_COOKIE['eigod_access'] : '';
-$parts = explode('.', $tok);
-if (count($parts) !== 2 || !$secret) deny();
-list($payload, $sig) = $parts;
-if (!hash_equals(hash_hmac('sha256', $payload, $secret), $sig)) deny();
-$decoded = base64_decode(strtr($payload, '-_', '+/'));
-$expiry = (int) strtok($decoded, '.');
-if ($expiry < time()) deny();
+if (!empty($cfg['gated'])) {
+    // 1. Verify the cookie: payload.hmac, payload = base64url(expiry.id)
+    $tok = isset($_COOKIE['eigod_access']) ? $_COOKIE['eigod_access'] : '';
+    $parts = explode('.', $tok);
+    if (count($parts) !== 2 || !$secret) deny();
+    list($payload, $sig) = $parts;
+    if (!hash_equals(hash_hmac('sha256', $payload, $secret), $sig)) deny();
+    $decoded = base64_decode(strtr($payload, '-_', '+/'));
+    $expiry = (int) strtok($decoded, '.');
+    if ($expiry < time()) deny();
+    // a partner cookie (id starts with 'p') is only good while it matches the current partner_key
+    $id = (string) substr($decoded, strlen((string) $expiry) + 1);
+    if ($id !== '' && $id[0] === 'p') {
+        $pk = isset($cfg['partner_key']) ? (string) $cfg['partner_key'] : '';
+        if ($pk === '' || !hash_equals('p' . substr(hash('sha256', 'partner:' . $pk), 0, 15), $id)) deny();
+    }
+}
 
 // 2. Resolve the requested file safely inside this folder
 $rel  = isset($_GET['f']) ? $_GET['f'] : '';
